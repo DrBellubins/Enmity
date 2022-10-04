@@ -10,7 +10,7 @@ using Raylib_cs;
 
 using static Enmity.Utils.GameMath;
 
-// TOOD: Terrain is top-down
+// TODO: Generate blocks beneath surface
 // TODO: Grass block at 0,0
 
 namespace Enmity.Terrain
@@ -123,10 +123,12 @@ namespace Enmity.Terrain
 
                     float hillGen = noise.GetNoise(chunkPosition.X + x, chunkPosition.Y + y);
 
-                    if (hillGen < -0.5f || hillGen > 0.5f)
+                    int scaledHillGen = (int)(hillGen * 25f);
+
+                    if (chunkPosition.Y == 0f && y == 0)
                     {
                         currentBlock = new Block(true, new Vector2(chunkPosition.X + (x - 0.5f),
-                                chunkPosition.Y + (y - 0.5f)), Block.Prefabs[BlockType.Stone]);
+                                chunkPosition.Y + (scaledHillGen - 0.5f)), Block.Prefabs[BlockType.Grass]);
                     }
 
                     currentBlock.ChunkInfo = chunk.Info;
