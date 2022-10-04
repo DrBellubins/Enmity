@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Numerics;
 using System.Threading.Tasks;
 
 using Raylib_cs;
+using Enmity.Utils;
 
 namespace Enmity
 {
@@ -38,6 +40,16 @@ namespace Enmity
             IsRunning = true;
             IsPaused = false;
 
+            // Initialize
+            GameMath.InitXorRNG();
+            Terrain.Block.InitializeBlockPrefabs();
+
+            var player = new Player();
+            player.Initialize();
+
+            var terrain = new Terrain.TerrainGeneration();
+            terrain.Initialize(player.Position);
+
             while (IsRunning)
             {
                 if (Raylib.WindowShouldClose())
@@ -46,11 +58,21 @@ namespace Enmity
                 currentTimer = DateTime.Now;
 
                 // Update
+                player.Update(deltaTime);
+                terrain.Update(player.Position);
 
                 Raylib.BeginDrawing();
                 Raylib.ClearBackground(Color.BLACK);
 
-                // Draw
+                Raylib.BeginMode2D(player.Camera);
+
+                // World draw
+                player.Draw();
+                terrain.Draw(player.Position);
+
+                Raylib.EndMode2D();
+
+                // UI Draw
 
                 Raylib.EndDrawing();
 

@@ -7,7 +7,7 @@ using System.Numerics;
 
 using Raylib_cs;
 
-namespace Enmity
+namespace Enmity.Utils
 {
     public class UI
     {
