@@ -39,7 +39,7 @@ namespace Enmity.Terrain
     public class Chunk
     {
         public ChunkInfo Info;
-        public Block[,] Blocks = new Block[32, 32];
+        public Block[,] Blocks = new Block[32, 256];
 
         public Chunk()
         {

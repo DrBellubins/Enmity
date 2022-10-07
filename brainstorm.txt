@@ -4,3 +4,5 @@ underground caves filled with different deadly gases that require special gas ma
 rust-esk crafting menu
 tinker's construct-esk weapon customization
 surface starts out fine, than becomes increasingly uninhabitable
+lucid dreams happen randomly & allow player to break/place blocks, enemies don't attack, wakes up instead of dying
+potion of fatigue induces lucid dream

@@ -20,33 +20,35 @@ namespace Enmity
 
         public void Initialize()
         {
+            Position = new Vector2(0f, 128f);
+
             Camera = new Camera2D();
             Camera.target = Position;
             Camera.offset = new Vector2(UI.CenterPivot.X, UI.CenterPivot.Y);
-            Camera.rotation = 0.0f; // Flip camera so that north is +Y
-            Camera.zoom = 100.0f;
+            Camera.rotation = 180.0f; // Flip camera so that north is +Y
+            Camera.zoom = 10.0f;
         }
 
         public void Update(float deltaTime)
         {
             if (Raylib.IsKeyDown(KeyboardKey.KEY_W))
             {
-                Position.Y -= 30f * deltaTime;
+                Position.Y += 30f * deltaTime;
             }
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_S))
             {
-                Position.Y += 30f * deltaTime;
+                Position.Y -= 30f * deltaTime;
             }
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
             {
-                Position.X -= 30f * deltaTime;
+                Position.X += 30f * deltaTime;
             }
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
             {
-                Position.X += 30f * deltaTime;
+                Position.X -= 30f * deltaTime;
             }
 
             Camera.zoom += Raylib.GetMouseWheelMove();
