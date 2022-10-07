@@ -3,3 +3,4 @@ apocalyptic world where a solar flare is scorching the earth, the surface is uni
 underground caves filled with different deadly gases that require special gas masks to be crafted
 rust-esk crafting menu
 tinker's construct-esk weapon customization
+surface starts out fine, than becomes increasingly uninhabitable

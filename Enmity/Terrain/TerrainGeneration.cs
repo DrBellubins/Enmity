@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -19,7 +20,7 @@ namespace Enmity.Terrain
     {
         public int Seed;
 
-        private Chunk[,] renderedChunks;
+        private Chunk[] renderedChunks;
 
         private int sqrtRenderDistance;
         private FastNoiseLite noise = new FastNoiseLite();
@@ -30,7 +31,7 @@ namespace Enmity.Terrain
             Seed = new Random().Next(int.MaxValue);
             noise.SetSeed(Seed);
 
-            renderedChunks = new Chunk[8, 8];
+            renderedChunks = new Chunk[8];
 
             sqrtRenderDistance = (int)MathF.Sqrt(renderedChunks.Length);
 
@@ -47,41 +48,41 @@ namespace Enmity.Terrain
 
         public void Draw(Vector2 playerPos)
         {
-            for (int cx = 0; cx < sqrtRenderDistance; cx++)
+            for (int cx = 0; cx < renderedChunks.Length; cx++)
             {
-                for (int cy = 0; cy < sqrtRenderDistance; cy++)
+                if (renderedChunks[cx] != null)
                 {
-                    if (renderedChunks[cx, cy] != null)
+                    Chunk currentChunk = renderedChunks[cx];
+
+                    var test = new Rectangle(currentChunk.Info.Position.X * 32f, currentChunk.Info.Position.Y * 32f, 32f, 32f);
+                    Raylib.DrawRectangleRec(test, new Color(255, 255, 255, 64));
+
+                    for (int x = 0; x < 32; x++)
                     {
-                        Chunk currentChunk = renderedChunks[cx, cy];
-
-                        for (int x = 0; x < 32; x++)
+                        for (int y = 0; y < 32; y++)
                         {
-                            for (int y = 0; y < 32; y++)
+                            var currentBlock = currentChunk.Blocks[x, y];
+
+                            var blockDistance = Vector2.Distance(playerPos, currentBlock.Position);
+
+                            if (blockDistance < 64)
                             {
-                                var currentBlock = currentChunk.Blocks[x, y];
+                                var origTextureRect = new Rectangle(0f, 0f, 8f, 8f);
+                                var newTextureRect = new Rectangle(currentBlock.Position.X,
+                                        currentBlock.Position.Y, 1f, 1f);
 
-                                var blockDistance = Vector2.Distance(playerPos, currentBlock.Position);
+                                //var lightLevel = currentBlock.LightLevel * 2.0f;
+                                var lightLevel = 1f;
 
-                                if (blockDistance < 32)
-                                {
-                                    var origTextureRect = new Rectangle(0f, 0f, 8f, 8f);
-                                    var newTextureRect = new Rectangle(currentBlock.Position.X,
-                                            currentBlock.Position.Y, 1f, 1f);
+                                var distanceFade = MathF.Pow(Clamp((1f / blockDistance) * 60, 0f, 1f), 16f);
 
-                                    //var lightLevel = currentBlock.LightLevel * 2.0f;
-                                    var lightLevel = 1f;
+                                var blockColor = new Color(0, 0, 0, 0);
 
-                                    var distanceFade = MathF.Pow(Clamp((1f / blockDistance) * 30f, 0f, 1f), 16f);
+                                blockColor = new Color((byte)(lightLevel * 255f),
+                                        (byte)(lightLevel * 255f), (byte)(lightLevel * 255f), (byte)(distanceFade * 255f));
 
-                                    var blockColor = new Color(0, 0, 0, 0);
-
-                                    blockColor = new Color((byte)(lightLevel * 255f),
-                                            (byte)(lightLevel * 255f), (byte)(lightLevel * 255f), (byte)(distanceFade * 255f));
-
-                                    Raylib.DrawTexturePro(Block.Textures[currentBlock.Info.Type],
-                                            origTextureRect, newTextureRect, Vector2.Zero, 0f, blockColor);
-                                }
+                                Raylib.DrawTexturePro(Block.Textures[currentBlock.Info.Type],
+                                        origTextureRect, newTextureRect, Vector2.Zero, 0f, blockColor);
                             }
                         }
                     }
@@ -91,15 +92,10 @@ namespace Enmity.Terrain
 
         private void regenerateChunks(Vector2 playerChunkPos)
         {
-            for (int cx = 0; cx < sqrtRenderDistance; cx++)
+            for (int cx = 0; cx < renderedChunks.Length; cx++)
             {
-                for (int cy = 0; cy < sqrtRenderDistance; cy++)
-                {
-                    var chunkPos = new Vector2(playerChunkPos.X + (cx * 32) - (sqrtRenderDistance * 16),
-                        playerChunkPos.Y + (cy * 32) - (sqrtRenderDistance * 16));
-
-                    renderedChunks[cx, cy] = generateChunk(chunkPos);
-                }
+                var chunkPos = new Vector2(playerChunkPos.X + (cx * 32) - (renderedChunks.Length * 16), 0f);
+                renderedChunks[cx] = generateChunk(chunkPos);
             }
         }
 
@@ -115,7 +111,7 @@ namespace Enmity.Terrain
                     var currentBlock = new Block();
 
                     noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-                    noise.SetFrequency(0.0035f);
+                    noise.SetFrequency(0.0015f);
                     noise.SetFractalType(FastNoiseLite.FractalType.FBm);
                     noise.SetDomainWarpAmp(200.0f);
                     noise.SetFractalLacunarity(3.0f);
@@ -125,10 +121,15 @@ namespace Enmity.Terrain
 
                     int scaledHillGen = (int)(hillGen * 25f);
 
-                    if (chunkPosition.Y == 0f && y == 0)
+                    if (chunkPosition.Y == 0f && y == 0) // Horizon
                     {
                         currentBlock = new Block(true, new Vector2(chunkPosition.X + (x - 0.5f),
-                                chunkPosition.Y + (scaledHillGen - 0.5f)), Block.Prefabs[BlockType.Grass]);
+                               chunkPosition.Y + (scaledHillGen - 0.5f)), Block.Prefabs[BlockType.Grass]);
+                    }
+                    else
+                    {
+                        currentBlock = new Block(true, new Vector2(chunkPosition.X + (x - 0.5f),
+                                chunkPosition.Y + (y - 0.5f)), Block.Prefabs[BlockType.Dirt]);
                     }
 
                     currentBlock.ChunkInfo = chunk.Info;

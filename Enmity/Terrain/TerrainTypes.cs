@@ -86,6 +86,7 @@ namespace Enmity.Terrain
         public static Dictionary<BlockType, BlockSounds> Sounds = new Dictionary<BlockType, BlockSounds>();
 
         public bool IsWall;
+        public bool IsHorizon;
         public Vector2 Position;
         public BlockInfo Info;
         public ChunkInfo ChunkInfo;

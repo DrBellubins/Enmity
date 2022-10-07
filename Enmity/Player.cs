@@ -31,22 +31,22 @@ namespace Enmity
         {
             if (Raylib.IsKeyDown(KeyboardKey.KEY_W))
             {
-                Position.Y -= 10f * deltaTime;
+                Position.Y -= 30f * deltaTime;
             }
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_S))
             {
-                Position.Y += 10f * deltaTime;
+                Position.Y += 30f * deltaTime;
             }
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
             {
-                Position.X -= 10f * deltaTime;
+                Position.X -= 30f * deltaTime;
             }
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
             {
-                Position.X += 10f * deltaTime;
+                Position.X += 30f * deltaTime;
             }
 
             Camera.zoom += Raylib.GetMouseWheelMove();

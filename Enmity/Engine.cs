@@ -44,11 +44,11 @@ namespace Enmity
             GameMath.InitXorRNG();
             Terrain.Block.InitializeBlockPrefabs();
 
+            var terrain = new Terrain.TerrainGeneration();
+            terrain.Initialize(Vector2.Zero);
+
             var player = new Player();
             player.Initialize();
-
-            var terrain = new Terrain.TerrainGeneration();
-            terrain.Initialize(player.Position);
 
             while (IsRunning)
             {
@@ -58,8 +58,8 @@ namespace Enmity
                 currentTimer = DateTime.Now;
 
                 // Update
-                player.Update(deltaTime);
                 terrain.Update(player.Position);
+                player.Update(deltaTime);
 
                 Raylib.BeginDrawing();
                 Raylib.ClearBackground(Color.BLACK);
@@ -67,8 +67,8 @@ namespace Enmity
                 Raylib.BeginMode2D(player.Camera);
 
                 // World draw
-                player.Draw();
                 terrain.Draw(player.Position);
+                player.Draw();
 
                 Raylib.EndMode2D();
 
