@@ -23,6 +23,7 @@ namespace Enmity
 
         public Camera2D Camera;
 
+        private bool canJump;
         private bool canRun;
         private float currentSpeed;
 
@@ -55,13 +56,10 @@ namespace Enmity
                 acceleration.X += 1.0f * deltaTime;
             }
 
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) && canRun)
+            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
                 currentSpeed = RunSpeed;
             else
                 currentSpeed = WalkSpeed;
-
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE))
-                acceleration.Y -= 0.15f;
 
             Position.X += velocity.X * currentSpeed;
 
@@ -78,9 +76,9 @@ namespace Enmity
 
                         if (isCollidingX)
                         {
-                            if (collCheck[x, y].IsWall)
+                            if (collCheck[x, y].Type != BlockType.Air)
                                 Position.X = lastPosition.X;
-                            else if (collCheck[x, y].Info.Type == BlockType.Water)
+                            else if (collCheck[x, y].Type == BlockType.Water)
                             {
                                 velocity.X *= 0.25f; // TODO: Needs to be frame independent
                                 canRun = false;
@@ -107,9 +105,9 @@ namespace Enmity
 
                         if (isCollidingY)
                         {
-                            if (collCheck[x, y].IsWall)
+                            if (collCheck[x, y].Type != BlockType.Air)
                                 Position.Y = lastPosition.Y;
-                            else if (collCheck[x, y].Info.Type == BlockType.Water)
+                            else if (collCheck[x, y].Type == BlockType.Water)
                             {
                                 velocity.Y *= 0.25f;
                                 canRun = false;
@@ -121,15 +119,26 @@ namespace Enmity
                 }
             }
 
+
+            if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE))
+            {
+                acceleration.Y = -0.03f;
+            }
+            else
+            {
+                acceleration.Y = 0.07f;
+            }
+
             velocity = Vector2.Lerp(velocity, Vector2.Zero, 0.2f);
             velocity += acceleration;
 
             // Reset velocity/acceleration
-            acceleration = new Vector2(0f, 0.1f);
+            acceleration = Vector2.Zero;
+            //acceleration = new Vector2(0f, 0.04f);
             //velocity = Vector2.Lerp(velocity, Vector2.Zero, 17f * deltaTime);
 
             Camera.zoom += Raylib.GetMouseWheelMove();
-            Camera.target = Position;
+            Camera.target = Vector2.Lerp(Camera.target, Position, 3.5f * deltaTime);
         }
 
         public void Draw(float deltaTime)

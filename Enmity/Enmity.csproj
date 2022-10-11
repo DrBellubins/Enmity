@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(SolutionDir)Enmity\Assets\&quot; &quot;$(TargetDir)Assets\&quot; /s /y" />
+    <Exec Command="xcopy &quot;$(SolutionDir)Enmity\Assets\&quot; &quot;$(TargetDir)Assets\&quot; /v /s /y" />
   </Target>
 
 </Project>

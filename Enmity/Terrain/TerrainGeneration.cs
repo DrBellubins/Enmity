@@ -80,12 +80,12 @@ namespace Enmity.Terrain
 
                             if (blockDistance < 1024)
                             {
-                                var origTextureRect = new Rectangle(0f, 0f, 8f, 8f);
+                                var origTextureRect = new Rectangle(0f, 0f, 16f, 16f);
                                 var newTextureRect = new Rectangle(currentBlock.Position.X,
                                         currentBlock.Position.Y, 1f, 1f);
 
-                                //var lightLevel = currentBlock.LightLevel * 2.0f;
-                                var lightLevel = 1f;
+                                var lightLevel = currentBlock.LightLevel;
+                                //lightLevel = Clamp(1f - lightLevel, 0f, 1f);
 
                                 var distanceFade = MathF.Pow(Clamp((1f / blockDistance) * 58, 0f, 1f), 16f);
 
@@ -94,10 +94,22 @@ namespace Enmity.Terrain
                                 blockColor = new Color((byte)(lightLevel * 255f),
                                         (byte)(lightLevel * 255f), (byte)(lightLevel * 255f), (byte)(255f));
 
-                                if (currentBlock.Info.Type != BlockType.Air)
+                                if (currentBlock.Type != BlockType.Air)
                                 {
-                                    Raylib.DrawTexturePro(Block.Textures[currentBlock.Info.Type],
-                                        origTextureRect, newTextureRect, Vector2.Zero, 0f, blockColor);
+                                    if (currentBlock.Type == BlockType.Grass)
+                                    {
+                                        // TODO: Draw grass without using two draw calls
+                                        Raylib.DrawTexturePro(Block.Textures[BlockType.Dirt],
+                                            origTextureRect, newTextureRect, Vector2.Zero, 0f, blockColor);
+
+                                        Raylib.DrawTexturePro(Block.Textures[BlockType.Grass],
+                                            origTextureRect, newTextureRect, Vector2.Zero, 0f, Color.GREEN);
+                                    }
+                                    else
+                                    {
+                                        Raylib.DrawTexturePro(Block.Textures[currentBlock.Type],
+                                            origTextureRect, newTextureRect, Vector2.Zero, 0f, blockColor);
+                                    }
                                 }
                             }
                         }
@@ -171,11 +183,11 @@ namespace Enmity.Terrain
                     var hillGen = (int)(chunkPosition.Y + noise.GetNoise(chunkPosition.X + x, chunkPosition.Y + y) * 25f);
 
                     // TODO: Surface grass is spotty
-                    if (y >= (hillGen + 63f) && y < (hillGen + 65f))
+                    /*if (y >= (hillGen + 63f) && y < (hillGen + 65f))
                     {
-                        currentBlock = new Block(true, new Vector2(chunkPosition.X + x,
-                                chunkPosition.Y + y), Block.Prefabs[BlockType.Grass]);
-                    }
+                        currentBlock = Block.LoadPrefabAtPosition(BlockType.Grass, new Vector2(chunkPosition.X + x,
+                                chunkPosition.Y + y));
+                    }*/
 
                     if (y >= (hillGen + 64f)) // Ground
                     {
@@ -210,9 +222,9 @@ namespace Enmity.Terrain
 
                         if (blockType != BlockType.Air)
                         {
-                            currentBlock = new Block(true, new Vector2(chunkPosition.X + x,
-                                chunkPosition.Y + y), Block.Prefabs[blockType]);
-                        } 
+                            currentBlock = Block.LoadPrefabAtPosition(blockType, new Vector2(chunkPosition.X + x,
+                                chunkPosition.Y + y));
+                        }
                     }
 
                     //if (chunk.Blocks[x,y] == null)
@@ -223,7 +235,52 @@ namespace Enmity.Terrain
                 }
             }
 
+            generateChunkLighting(chunk);
+
             return chunk;
+        }
+
+        // TODO: Lighting only works for sunlight (kinda)
+        private void generateChunkLighting(Chunk chunk)
+        {
+            for (int x = 0; x < 32; x++)
+            {
+                for (int y = 0; y < 256; y++)
+                {
+                    var currentBlock = chunk.Blocks[x, y];
+
+                    if (currentBlock.Type == BlockType.Air)
+                        currentBlock.LightLevel = 1f;
+
+                    var leftBlock = chunk.Blocks[Clamp(x - 1, 0, 31), 0];
+                    var rightBlock = chunk.Blocks[Clamp(x + 1, 0, 31), 0];
+                    var topBlock = chunk.Blocks[x, Clamp(y - 1, 0, 255)];
+                    var bottomBlock = chunk.Blocks[x, Clamp(y + 1, 0, 255)];
+
+                    // TODO: Light falloff changes brightness of all blocks, regardless of neighboring light level (unless set to 0.99 somehow)
+                    if (topBlock != null)
+                        currentBlock.LightLevel = Clamp(topBlock.LightLevel, 0f, 1f) * 0.99f;
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        //if (leftBlock != null)
+                        //    currentBlock.LightLevel = Clamp(leftBlock.LightLevel * 0.5f, 0f, 1f);
+
+                        //if (rightBlock != null)
+                        //    currentBlock.LightLevel = Clamp(rightBlock.LightLevel * 0.5f, 0f, 1f);
+
+                        //if (bottomBlock != null)
+                        //    currentBlock.LightLevel = Clamp(bottomBlock.LightLevel * 0.5f, 0f, 1f);
+                    }
+
+                    // Debug
+                    if (x == 16 && y == 128)
+                    {
+                        Console.WriteLine($"Pos: ({currentBlock.Position.X}, {currentBlock.Position.Y}), ({topBlock.Position.X}, {topBlock.Position.Y})");
+                        Console.WriteLine($"Light level: {currentBlock.LightLevel}");
+                    }
+                }
+            }
         }
 
         private Chunk? getChunkAtPos(Vector2 position)

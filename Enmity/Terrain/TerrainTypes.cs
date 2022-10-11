@@ -82,45 +82,59 @@ namespace Enmity.Terrain
 
     public class Block
     {
-        public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();
+        public static Dictionary<BlockType, Block> Prefabs = new Dictionary<BlockType, Block>();
         public static Dictionary<BlockType, Texture2D> Textures = new Dictionary<BlockType, Texture2D>();
         public static Dictionary<BlockType, BlockSounds> Sounds = new Dictionary<BlockType, BlockSounds>();
 
-        public bool IsWall;
-        public bool IsHorizon;
-        public Vector2 Position;
-        public BlockInfo Info;
-        public ChunkInfo ChunkInfo;
+        public BlockType Type;
         public float LightLevel; // 0 to 1
+        public int Hardness; // 0 to 10 (10 being unbreakable)
+        public float Thickness; // 0 to 1 (Used for slowling player down)
+        public int MaxStack;
+        public Vector2 Position;
+        public ChunkInfo ChunkInfo;
+        public TerrainBiome Biome;
 
         public Block()
         {
-            IsWall = false;
+            Type = BlockType.Air;
+            LightLevel = 0;
+            Hardness = 2;
+            Thickness = 1f;
+            MaxStack = 64;
             Position = Vector2.Zero;
-            Info = new BlockInfo(BlockType.Air, 2, 0.0f, 64);
             ChunkInfo = new ChunkInfo();
-            LightLevel = 1.0f;
+            Biome = TerrainBiome.Flatland;
         }
 
-        public Block(bool isWall, Vector2 position, BlockInfo info)
+        public Block(BlockType blockType, Vector2 position)
         {
-            IsWall = isWall;
+            Type = blockType;
             Position = position;
-            Info = info;
             ChunkInfo = new ChunkInfo();
-            LightLevel = 1.0f;
+            LightLevel = 0;
+        }
+
+        public Block(BlockType blockType, int hardness, float thickness, int maxStack)
+        {
+            Type = blockType;
+            Hardness = hardness;
+            Thickness = thickness;
+            MaxStack = maxStack;
+            ChunkInfo = new ChunkInfo();
+            LightLevel = 0;
         }
 
         public static void InitializeBlockPrefabs()
         {
             // MUST BE IN BLOCKTYPE ORDER!!!
             // BlockInfo(hardness, thickness)
-            Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64));
-            Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64));
-            Prefabs.Add(BlockType.Dirt, new BlockInfo(BlockType.Dirt, 2, 0.0f, 64));
-            Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64));
-            Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64));
-            Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64));
+            Prefabs.Add(BlockType.Grass, new Block(BlockType.Grass, 2, 0.0f, 64));
+            Prefabs.Add(BlockType.Stone, new Block(BlockType.Stone, 4, 0.0f, 64));
+            Prefabs.Add(BlockType.Dirt, new Block(BlockType.Dirt, 2, 0.0f, 64));
+            Prefabs.Add(BlockType.Sand, new Block(BlockType.Sand, 1, 0.0f, 64));
+            Prefabs.Add(BlockType.Water, new Block(BlockType.Water, 10, 0.5f, 64));
+            Prefabs.Add(BlockType.Snow, new Block(BlockType.Snow, 1, 0.0f, 64));
 
             // Load all block textures for later access
             var blockTypeCount = Enum.GetNames(typeof(BlockType)).Length;
@@ -142,16 +156,38 @@ namespace Enmity.Terrain
             }
         }
 
+        public static Block LoadPrefabAtPosition(BlockType blockType, Vector2 position)
+        {
+            var block = new Block();
+            var blockPrefab = Prefabs[blockType];
+
+            if (blockPrefab != null)
+            {
+                block.Type = blockType;
+                block.LightLevel = blockPrefab.LightLevel;
+                block.Hardness = blockPrefab.Hardness;
+                block.Thickness = blockPrefab.Thickness;
+                block.MaxStack = blockPrefab.MaxStack;
+                block.Position = position;
+                block.ChunkInfo = new ChunkInfo();
+                block.Biome = TerrainBiome.Flatland;
+            }
+            else
+                block = new Block();
+
+            return block;
+        }
+
         private static Texture2D loadBlockTexture(BlockType blockType)
         {
             switch (blockType)
             {
                 case BlockType.Grass:
-                    return Raylib.LoadTexture("Assets/Textures/Blocks/grass.png");
+                    return Raylib.LoadTexture("Assets/Textures/Blocks/grass_top.png");
                 case BlockType.Stone:
                     return Raylib.LoadTexture("Assets/Textures/Blocks/stone.png");
                 case BlockType.Dirt:
-                    return Raylib.LoadTexture("Assets/Textures/Blocks/dirt.png");
+                    return Raylib.LoadTexture("Assets/Textures/Blocks/dirt_test.png");
                 case BlockType.Sand:
                     return Raylib.LoadTexture("Assets/Textures/Blocks/sand.png");
                 case BlockType.Water:
