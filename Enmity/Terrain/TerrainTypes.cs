@@ -10,6 +10,7 @@ namespace Enmity.Terrain
 {
     public enum BlockType
     {
+        Air,
         Grass,
         Stone,
         Dirt,
@@ -31,7 +32,7 @@ namespace Enmity.Terrain
 
     public class ChunkInfo
     {
-        public bool Generated; // Runtime quality-of-life check
+        public bool Generated;
         public bool Modified;
         public Vector2 Position;
     }
@@ -96,7 +97,7 @@ namespace Enmity.Terrain
         {
             IsWall = false;
             Position = Vector2.Zero;
-            Info = new BlockInfo(BlockType.Grass, 2, 0.0f, 64);
+            Info = new BlockInfo(BlockType.Air, 2, 0.0f, 64);
             ChunkInfo = new ChunkInfo();
             LightLevel = 1.0f;
         }

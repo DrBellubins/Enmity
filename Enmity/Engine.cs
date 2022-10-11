@@ -27,7 +27,7 @@ namespace Enmity
         {
             Raylib.InitWindow(1920, 1080, "Enmity dev");
             Raylib.SetExitKey(KeyboardKey.KEY_Q);
-            Raylib.SetTargetFPS(FPS);
+            Raylib.SetTargetFPS(60);
 
             MainFont = Raylib.LoadFontEx("Assets/Font/VarelaRound-Regular.ttf", 64, null, 250);
 
@@ -69,7 +69,7 @@ namespace Enmity
                 // Update
                 Debug.Update();
                 terrain.Update(player.Position);
-                player.Update(deltaTime);
+                player.Update(deltaTime, terrain.ColliderCheckArray);
 
                 Raylib.BeginDrawing();
                 Raylib.ClearBackground(Color.BLACK);
@@ -78,7 +78,7 @@ namespace Enmity
 
                 // World draw
                 terrain.Draw(player.Position);
-                player.Draw();
+                player.Draw(deltaTime);
 
                 Raylib.EndMode2D();
 
