@@ -52,7 +52,9 @@ namespace Enmity.GameMechanics
             currentSkyColor = GameMath.ColorLerp(nightSkyColor, daySkyColor, SkyBrightness);
 
             Raylib.DrawRectangleGradientV(0, 0, Engine.ScreenWidth, Engine.ScreenHeight, currentSkyColor, currentSkyColor);
-            Debug.DrawText($"Time of day: {SkyBrightness}");
+
+            Debug.DrawText($"Time of day: {TimeOfDay}");
+            Debug.DrawText($"Sky brightness: {SkyBrightness}");
         }
     }
 }

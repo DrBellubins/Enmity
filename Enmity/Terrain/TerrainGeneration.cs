@@ -15,16 +15,18 @@ namespace Enmity.Terrain
     internal class TerrainGeneration
     {
         public int Seed;
-
+        public Block SelectedBlock = new Block();
         public Block[,] ColliderCheckArray = new Block[4, 4];
 
         private Chunk[] renderedChunks;
 
         private List<Chunk> chunkBuffer = new List<Chunk>();
 
-        private int sqrtRenderDistance;
         private FastNoiseLite noise = new FastNoiseLite();
         private Vector2 prevNearestChunkPos;
+
+        private Vector2 worldCursorPos;
+        private Rectangle terrainCursor = new Rectangle(0.0f, 0.0f, 1.0f, 1.0f);
 
         public void Initialize(Vector2 spawnPoint)
         {
@@ -33,14 +35,41 @@ namespace Enmity.Terrain
 
             renderedChunks = new Chunk[8];
 
-            sqrtRenderDistance = (int)MathF.Sqrt(renderedChunks.Length);
-
             regenerateChunks(GetNearestChunkCoord(spawnPoint));
         }
 
-        public void Update(Vector2 playerPos)
+        private bool cursorBlocked = false;
+        private Vector2 prevSelectedBlockPos;
+
+        public void Update(Vector2 playerPos, Camera2D camera)
         {
+            worldCursorPos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
             var nearestChunkPos = GetNearestChunkCoord(playerPos);
+
+            var terrainCursorPos = GetNearestBlockCoord(worldCursorPos);
+            terrainCursor.x = terrainCursorPos.X;
+            terrainCursor.y = terrainCursorPos.Y;
+
+            prevSelectedBlockPos = SelectedBlock.Position;
+            SelectedBlock = getBlockAtPos(terrainCursorPos);
+
+            // TODO: Can't place blocks in the sky ?????
+            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT)
+                && SelectedBlock.Type == BlockType.Air && SelectedBlock.Position == prevSelectedBlockPos && !cursorBlocked)
+            {
+                Console.WriteLine("place");
+                //var testBlock = new Block(true, SelectedBlock.Position, Block.Prefabs[hotbarSelection.Type]);
+                var testBlock = Block.LoadPrefabAtPosition(BlockType.Air, SelectedBlock.Position);
+
+                PlaceBlock(playerPos, SelectedBlock.Position, testBlock);
+
+                var sound = Block.Sounds[testBlock.Type].RND;
+
+                Raylib.SetSoundPitch(sound, GetXorFloat(0.8f, 1.0f));
+                Raylib.PlaySound(sound);
+            }
+
+            Debug.DrawText($"selected type: {SelectedBlock.Type}, {SelectedBlock.Position.X}, {SelectedBlock.Position.Y}");
 
             // TODO: Player clips into world (but hovers when falling)
             for (int x = 0; x < 4; x++)
@@ -75,7 +104,7 @@ namespace Enmity.Terrain
 
                             var blockDistance = Vector2.Distance(playerPos, currentBlock.Position);
 
-                            if (blockDistance < 1024)
+                            if (blockDistance < 64f)
                             {
                                 var origTextureRect = new Rectangle(0f, 0f, 16f, 16f);
                                 var newTextureRect = new Rectangle(currentBlock.Position.X,
@@ -119,6 +148,8 @@ namespace Enmity.Terrain
                             }
                         }
                     }
+
+                    Raylib.DrawRectangleLinesEx(terrainCursor, 0.1f, Color.WHITE);
 
                     //UI.DrawText($"Chunk index: {cx}", 2f, new Vector2(currentChunk.Info.Position.X, 0f));
                     //var chunkDebug = new Rectangle(currentChunk.Info.Position.X, currentChunk.Info.Position.Y, 32f, 256f);
@@ -342,6 +373,81 @@ namespace Enmity.Terrain
             }
 
             return retBlock;
+        }
+
+        private void PlaceBlock(Vector2 playerPos, Vector2 blockPos, Block block)
+        {
+            for (int cx = 0; cx < renderedChunks.Length; cx++)
+            {
+                if (renderedChunks[cx] != null)
+                {
+                    var currentChunk = renderedChunks[cx];
+
+                    for (int x = 0; x < 32; x++)
+                    {
+                        for (int y = 0; y < 256; y++)
+                        {
+                            var currentBlock = currentChunk.Blocks[x, y];
+
+                            if (Vector2Equals(currentBlock.Position, blockPos))
+                            {
+                                currentChunk.Blocks[x, y] = block;
+
+                                block.Biome = currentBlock.Biome;
+
+                                // Avoid adding same chunk twice
+                                if (!currentChunk.Info.Modified)
+                                {
+                                    currentChunk.Info.Modified = true;
+                                    //WorldSave.Data.ModifiedChunks.Add(currentChunk);
+                                }
+
+                                renderedChunks[cx] = currentChunk;
+                            }
+                        }
+                    }
+
+                    //GenerateLighting(renderedChunks[cx, cy]);
+                }
+            }
+        }
+
+        private void BreakBlock(Vector2 playerPos, Vector2 blockPos)
+        {
+            for (int cx = 0; cx < renderedChunks.Length; cx++)
+            {
+                if (renderedChunks[cx] != null)
+                {
+                    var currentChunk = renderedChunks[cx];
+
+                    for (int x = 0; x < 32; x++)
+                    {
+                        for (int y = 0; y < 256; y++)
+                        {
+                            var currentBlock = currentChunk.Blocks[x, y];
+
+                            if (Vector2Equals(currentBlock.Position, blockPos))
+                            {
+                                var underBlock = Block.LoadPrefabAtPosition(currentBlock.Type, blockPos);
+                                underBlock.Biome = currentBlock.Biome;
+
+                                currentChunk.Blocks[x, y] = underBlock;
+
+                                // Avoid adding same chunk twice
+                                if (!currentChunk.Info.Modified)
+                                {
+                                    currentChunk.Info.Modified = true;
+                                    //WorldSave.Data.ModifiedChunks.Add(currentChunk);
+                                }
+
+                                renderedChunks[cx] = currentChunk;
+                            }
+                        }
+                    }
+
+                    //GenerateLighting(renderedChunks[cx, cy]);
+                }
+            }
         }
     }
 }

@@ -107,7 +107,7 @@ namespace Enmity.Terrain
             Biome = TerrainBiome.Flatland;
         }
 
-        public Block(BlockType blockType, Vector2 position)
+        private Block(BlockType blockType, Vector2 position)
         {
             Type = blockType;
             Position = position;
@@ -115,7 +115,7 @@ namespace Enmity.Terrain
             LightLevel = 0;
         }
 
-        public Block(BlockType blockType, int hardness, float thickness, int maxStack)
+        private Block(BlockType blockType, int hardness, float thickness, int maxStack)
         {
             Type = blockType;
             Hardness = hardness;
@@ -136,8 +136,8 @@ namespace Enmity.Terrain
             Prefabs.Add(BlockType.Water, new Block(BlockType.Water, 10, 0.5f, 64));
             Prefabs.Add(BlockType.Snow, new Block(BlockType.Snow, 1, 0.0f, 64));
 
-            // Load all block textures for later access
-            var blockTypeCount = Enum.GetNames(typeof(BlockType)).Length;
+            // Load all block textures/sounds (minus air) for later access
+            var blockTypeCount = Enum.GetNames(typeof(BlockType)).Length - 1;
 
             for (int i = 0; i < blockTypeCount; i++)
             {
@@ -150,7 +150,6 @@ namespace Enmity.Terrain
                     Console.WriteLine(ii);
                     blockSounds.Sounds[ii] = loadBlockSounds((BlockType)i, ii);
                 }
-
 
                 Sounds.Add((BlockType)i, blockSounds);
             }
@@ -216,7 +215,7 @@ namespace Enmity.Terrain
                 case BlockType.Snow:
                     return Raylib.LoadSound($"Assets/Sounds/Blocks/Snow/snow{i}.ogg");
                 default:
-                    return Raylib.LoadSound($"Assets/Sounds/Blocks/Stone/stone{i}.ogg");
+                    return Raylib.LoadSound($"Assets/Sounds/Unused/error.ogg");
             }
         }
     }

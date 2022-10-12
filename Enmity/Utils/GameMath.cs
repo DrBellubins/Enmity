@@ -121,6 +121,27 @@ namespace Enmity.Utils
             return (1f - t) * a + t * b;
         }
 
+        // Color math
+        public static Color ColorRGBAdd(Color a, Color b)
+        {
+            return new Color(a.r + b.r, a.g + b.g, a.b + b.b, 255);
+        }
+
+        public static Color ColorRGBSub(Color a, Color b)
+        {
+            return new Color(a.r - b.r, a.g - b.g, a.b - b.b, 255);
+        }
+
+        public static Color ColorRGBMult(Color a, Color b)
+        {
+            return new Color(a.r * b.r, a.g * b.g, a.b * b.b, 255);
+        }
+
+        public static Color ColorRGBDiv(Color a, Color b)
+        {
+            return new Color(a.r / b.r, a.g / b.g, a.b / b.b, 255);
+        }
+
         public static Color ColorLerp(Color start, Color end, float ammount)
         {
             Color ret = new Color();

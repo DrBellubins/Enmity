@@ -42,6 +42,7 @@ namespace Enmity
             IsPaused = false;
 
             // Initialize
+            Raylib.InitAudioDevice();
             GameMath.InitXorRNG();
             Terrain.Block.InitializeBlockPrefabs();
 
@@ -73,7 +74,7 @@ namespace Enmity
                 // Update
                 Debug.Update();
                 dayNightCycle.Update(deltaTime);
-                terrain.Update(player.Position);
+                terrain.Update(player.Position, player.Camera);
                 player.Update(deltaTime, terrain.ColliderCheckArray);
 
                 Raylib.BeginDrawing();
