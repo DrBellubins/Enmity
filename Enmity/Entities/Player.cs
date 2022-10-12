@@ -10,13 +10,13 @@ using Raylib_cs;
 using Enmity.Utils;
 using Enmity.Terrain;
 
-namespace Enmity
+namespace Enmity.Entities
 {
     internal class Player
     {
         // Movement
-        public const float WalkSpeed = 1.45f;
-        public const float RunSpeed = 3.5f;
+        public const float WalkSpeed = 0.5f;
+        public const float RunSpeed = 1.45f;
 
         public Vector2 Position;
         public float Rotation;
@@ -39,29 +39,25 @@ namespace Enmity
             Camera.target = Position;
             Camera.offset = new Vector2(UI.CenterPivot.X, UI.CenterPivot.Y);
             Camera.rotation = 0f; // Flip camera so that north is +Y
-            Camera.zoom = 10f;
+            Camera.zoom = 100f;
         }
 
         public void Update(float deltaTime, Block[,] collCheck)
         {
             lastPosition = Position;
 
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
-            {
-                acceleration.X -= 1.0f * deltaTime;
-            }
-
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
-            {
-                acceleration.X += 1.0f * deltaTime;
-            }
-
             if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
                 currentSpeed = RunSpeed;
             else
                 currentSpeed = WalkSpeed;
 
-            Position.X += velocity.X * currentSpeed;
+            if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
+                acceleration.X -= 1.0f * currentSpeed * deltaTime;
+
+            if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
+                acceleration.X += 1.0f * currentSpeed * deltaTime;
+
+            Position.X += velocity.X;
 
             for (int x = 0; x < 4; x++)
             {
@@ -90,7 +86,7 @@ namespace Enmity
                 }
             }
 
-            Position.Y += velocity.Y * currentSpeed;
+            Position.Y += velocity.Y;
 
             for (int x = 0; x < 4; x++)
             {
@@ -119,15 +115,10 @@ namespace Enmity
                 }
             }
 
-
             if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE))
-            {
                 acceleration.Y = -0.03f;
-            }
             else
-            {
-                acceleration.Y = 0.07f;
-            }
+                acceleration.Y = 0.06f;
 
             velocity = Vector2.Lerp(velocity, Vector2.Zero, 0.2f);
             velocity += acceleration;
@@ -137,14 +128,14 @@ namespace Enmity
             //acceleration = new Vector2(0f, 0.04f);
             //velocity = Vector2.Lerp(velocity, Vector2.Zero, 17f * deltaTime);
 
-            Camera.zoom += Raylib.GetMouseWheelMove();
+            Camera.zoom = GameMath.Clamp(Camera.zoom + Raylib.GetMouseWheelMove(), 15f, 100f);
             Camera.target = Vector2.Lerp(Camera.target, Position, 3.5f * deltaTime);
         }
 
         public void Draw(float deltaTime)
         {
             Debug.DrawText($"delta: {deltaTime}");
-            Raylib.DrawCircleV(Position, 0.45f, Color.BLUE);
+            Raylib.DrawCircleV(Position, 0.45f, Color.GREEN);
         }
     }
 }

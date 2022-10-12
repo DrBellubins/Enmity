@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 
 using Raylib_cs;
+
 using Enmity.Utils;
 
 namespace Enmity
@@ -46,10 +47,13 @@ namespace Enmity
 
             Debug.Initialize();
 
+            var dayNightCycle = new GameMechanics.DayNightCycle();
+            dayNightCycle.Initialize();
+
             var terrain = new Terrain.TerrainGeneration();
             terrain.Initialize(new Vector2(0f, 128f));
 
-            var player = new Player();
+            var player = new Entities.Player();
             player.Initialize();
 
             while (IsRunning)
@@ -68,16 +72,20 @@ namespace Enmity
 
                 // Update
                 Debug.Update();
+                dayNightCycle.Update(deltaTime);
                 terrain.Update(player.Position);
                 player.Update(deltaTime, terrain.ColliderCheckArray);
 
                 Raylib.BeginDrawing();
                 Raylib.ClearBackground(Color.BLACK);
 
+                // Pre-world draw
+                dayNightCycle.Draw(deltaTime);
+
                 Raylib.BeginMode2D(player.Camera);
 
                 // World draw
-                terrain.Draw(player.Position);
+                terrain.Draw(dayNightCycle.SkyBrightness, player.Position);
                 player.Draw(deltaTime);
 
                 Raylib.EndMode2D();

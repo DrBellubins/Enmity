@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -11,7 +10,6 @@ using Raylib_cs;
 
 using static Enmity.Utils.GameMath;
 
-// TODO: Grass block at 0,0
 namespace Enmity.Terrain
 {
     internal class TerrainGeneration
@@ -60,15 +58,14 @@ namespace Enmity.Terrain
             prevNearestChunkPos = nearestChunkPos;
         }
 
-        public void Draw(Vector2 playerPos)
+        // TODO: Time of day affect is only visual
+        public void Draw(float skyBrightness, Vector2 playerPos)
         {
             for (int cx = 0; cx < renderedChunks.Length; cx++)
             {
                 if (renderedChunks[cx] != null)
                 {
                     Chunk currentChunk = renderedChunks[cx];
-
-                    UI.DrawText($"Chunk index: {cx}", 2f, new Vector2(currentChunk.Info.Position.X, 0f));
 
                     for (int x = 0; x < 32; x++)
                     {
@@ -84,8 +81,16 @@ namespace Enmity.Terrain
                                 var newTextureRect = new Rectangle(currentBlock.Position.X,
                                         currentBlock.Position.Y, 1f, 1f);
 
-                                var lightLevel = currentBlock.LightLevel;
+                                var lightLevel = currentBlock.LightLevel * Clamp(skyBrightness + 0.3f, 0f, 1f);
+                                //lightLevel = Clamp(lightLevel, 0f, 1f);
+
+                                //var lightLevel = currentBlock.LightLevel * 2f;
                                 //lightLevel = Clamp(1f - lightLevel, 0f, 1f);
+
+                                /*if (x == 16 && y == 128)
+                                {
+                                    Console.WriteLine($"Light level: {lightLevel}");
+                                }*/
 
                                 var distanceFade = MathF.Pow(Clamp((1f / blockDistance) * 58, 0f, 1f), 16f);
 
@@ -115,8 +120,9 @@ namespace Enmity.Terrain
                         }
                     }
 
-                    var chunkDebug = new Rectangle(currentChunk.Info.Position.X, currentChunk.Info.Position.Y, 32f, 256f);
-                    Raylib.DrawRectangleLinesEx(chunkDebug, 0.25f, Color.WHITE);
+                    //UI.DrawText($"Chunk index: {cx}", 2f, new Vector2(currentChunk.Info.Position.X, 0f));
+                    //var chunkDebug = new Rectangle(currentChunk.Info.Position.X, currentChunk.Info.Position.Y, 32f, 256f);
+                    //Raylib.DrawRectangleLinesEx(chunkDebug, 0.25f, Color.WHITE);
                 }
             }
 
@@ -224,6 +230,8 @@ namespace Enmity.Terrain
                         {
                             currentBlock = Block.LoadPrefabAtPosition(blockType, new Vector2(chunkPosition.X + x,
                                 chunkPosition.Y + y));
+
+                            currentBlock.LightLevel = 0f;
                         }
                     }
 
@@ -249,36 +257,38 @@ namespace Enmity.Terrain
                 {
                     var currentBlock = chunk.Blocks[x, y];
 
-                    if (currentBlock.Type == BlockType.Air)
-                        currentBlock.LightLevel = 1f;
-
                     var leftBlock = chunk.Blocks[Clamp(x - 1, 0, 31), 0];
                     var rightBlock = chunk.Blocks[Clamp(x + 1, 0, 31), 0];
                     var topBlock = chunk.Blocks[x, Clamp(y - 1, 0, 255)];
                     var bottomBlock = chunk.Blocks[x, Clamp(y + 1, 0, 255)];
 
-                    // TODO: Light falloff changes brightness of all blocks, regardless of neighboring light level (unless set to 0.99 somehow)
-                    if (topBlock != null)
-                        currentBlock.LightLevel = Clamp(topBlock.LightLevel, 0f, 1f) * 0.99f;
-
-                    for (int i = 0; i < 4; i++)
+                    if (currentBlock.Type == BlockType.Air)
+                        currentBlock.LightLevel = 1f;
+                    else
                     {
-                        //if (leftBlock != null)
-                        //    currentBlock.LightLevel = Clamp(leftBlock.LightLevel * 0.5f, 0f, 1f);
+                        // TODO: Average all neighboring blocks together
+                        if (topBlock != null)
+                            currentBlock.LightLevel = Clamp(topBlock.LightLevel * 0.9f, 0f, 1f);
 
-                        //if (rightBlock != null)
-                        //    currentBlock.LightLevel = Clamp(rightBlock.LightLevel * 0.5f, 0f, 1f);
+                        /*if (leftBlock != null)
+                            currentBlock.LightLevel -= Clamp(leftBlock.LightLevel * 0.1f, 0f, 1f);
 
-                        //if (bottomBlock != null)
-                        //    currentBlock.LightLevel = Clamp(bottomBlock.LightLevel * 0.5f, 0f, 1f);
+                        if (rightBlock != null)
+                            currentBlock.LightLevel -= Clamp(rightBlock.LightLevel * 0.1f, 0f, 1f);
+
+                        if (topBlock != null)
+                            currentBlock.LightLevel -= Clamp(topBlock.LightLevel * 0.1f, 0f, 1f);
+
+                        if (bottomBlock != null)
+                            currentBlock.LightLevel -= Clamp(bottomBlock.LightLevel * 0.1f, 0f, 1f);*/
                     }
 
                     // Debug
-                    if (x == 16 && y == 128)
+                    /*if (x == 16 && y == 128)
                     {
                         Console.WriteLine($"Pos: ({currentBlock.Position.X}, {currentBlock.Position.Y}), ({topBlock.Position.X}, {topBlock.Position.Y})");
                         Console.WriteLine($"Light level: {currentBlock.LightLevel}");
-                    }
+                    }*/
                 }
             }
         }

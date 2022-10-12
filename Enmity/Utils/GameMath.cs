@@ -121,6 +121,18 @@ namespace Enmity.Utils
             return (1f - t) * a + t * b;
         }
 
+        public static Color ColorLerp(Color start, Color end, float ammount)
+        {
+            Color ret = new Color();
+
+            ret.r = (byte)Lerp((float)start.r, (float)end.r, ammount);
+            ret.g = (byte)Lerp((float)start.g, (float)end.g, ammount);
+            ret.b = (byte)Lerp((float)start.b, (float)end.b, ammount);
+            ret.a = (byte)Lerp((float)start.a, (float)end.a, ammount);
+
+            return ret;
+        }
+
         public static Vector2 GetNearestChunkCoord(Vector2 input)
         {
             int x = (int)MathF.Floor(input.X);
