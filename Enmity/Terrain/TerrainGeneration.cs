@@ -306,21 +306,29 @@ namespace Enmity.Terrain
                 {
                     var currentBlock = chunk.Blocks[x, y];
 
-                    var leftBlock = chunk.Blocks[Clamp(x - 1, 0, 31), 0];
-                    var rightBlock = chunk.Blocks[Clamp(x + 1, 0, 31), 0];
+                    var leftBlock = chunk.Blocks[Clamp(x - 1, 0, 31), y];
+                    var rightBlock = chunk.Blocks[Clamp(x + 1, 0, 31), y];
                     var topBlock = chunk.Blocks[x, Clamp(y - 1, 0, 255)];
                     var bottomBlock = chunk.Blocks[x, Clamp(y + 1, 0, 255)];
 
-                    if (currentBlock.Type == BlockType.Air || currentBlock.Type == BlockType.Snow || !currentBlock.IsWall)
+                    if (currentBlock.Type == BlockType.Air || !currentBlock.IsWall)
                         currentBlock.LightLevel = 1f;
                     else
                     {
-                        // TODO: Average all neighboring blocks together
-                        if (topBlock != null)
-                            currentBlock.LightLevel = Clamp(topBlock.LightLevel * 0.9f, 0f, 1f);
+                        // TODO: Light is diagonal
+                        if (leftBlock != null)
+                            currentBlock.LightLevel += (leftBlock.LightLevel * 0.45f);
+                        
+                        if (rightBlock != null)
+                            currentBlock.LightLevel += (rightBlock.LightLevel * 0.45f);
 
-                        //currentBlock.LightLevel = Clamp((leftBlock.LightLevel + rightBlock.LightLevel +
-                        //    topBlock.LightLevel + bottomBlock.LightLevel) / 4f, 0f, 1f);
+                        if (topBlock != null)
+                            currentBlock.LightLevel += (topBlock.LightLevel * 0.45f);
+
+                        if (bottomBlock != null)
+                            currentBlock.LightLevel += (bottomBlock.LightLevel * 0.45f);
+
+                        currentBlock.LightLevel = Clamp(currentBlock.LightLevel, 0f, 1f);
                     }
 
                     // Debug
@@ -329,6 +337,22 @@ namespace Enmity.Terrain
                         Console.WriteLine($"Pos: ({currentBlock.Position.X}, {currentBlock.Position.Y}), ({topBlock.Position.X}, {topBlock.Position.Y})");
                         Console.WriteLine($"Light level: {currentBlock.LightLevel}");
                     }*/
+                }
+            }
+        }
+
+        private void clearChunkLighting(Chunk chunk)
+        {
+            for (int x = 0; x < 32; x++)
+            {
+                for (int y = 0; y < 256; y++)
+                {
+                    var currentBlock = chunk.Blocks[x, y];
+
+                    if (currentBlock.Type == BlockType.Air)
+                        currentBlock.LightLevel = 1f;
+                    else
+                        currentBlock.LightLevel = 0f;
                 }
             }
         }
@@ -417,6 +441,8 @@ namespace Enmity.Terrain
                     }
 
                     renderedChunks[cx] = currentChunk;
+
+                    clearChunkLighting(currentChunk);
                     generateChunkLighting(currentChunk);
                 }
             }
@@ -458,6 +484,7 @@ namespace Enmity.Terrain
                         }
                     }
 
+                    clearChunkLighting(currentChunk);
                     generateChunkLighting(renderedChunks[cx]);
                 }
             }
