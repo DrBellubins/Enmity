@@ -142,6 +142,26 @@ namespace Enmity.Utils
             return new Color(a.r / b.r, a.g / b.g, a.b / b.b, 255);
         }
 
+        public static Color ColorRGBAddVal(Color a, float b)
+        {
+            return new Color((int)((float)a.r + b), (int)((float)a.g + b), (int)((float)a.b + b), 255);
+        }
+
+        public static Color ColorRGBSubVal(Color a, float b)
+        {
+            return new Color((int)((float)a.r - b), (int)((float)a.g - b), (int)((float)a.b - b), 255);
+        }
+
+        public static Color ColorRGBMultVal(Color a, float b)
+        {
+            return new Color((int)((float)a.r * b), (int)((float)a.g * b), (int)((float)a.b * b), 255);
+        }
+
+        public static Color ColorRGBDivVal(Color a, float b)
+        {
+            return new Color((int)((float)a.r / b), (int)((float)a.g / b), (int)((float)a.b / b), 255);
+        }
+
         public static Color ColorLerp(Color start, Color end, float ammount)
         {
             Color ret = new Color();

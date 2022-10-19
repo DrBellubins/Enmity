@@ -48,25 +48,6 @@ namespace Enmity.Terrain
         }
     }
 
-    public class BlockInfo
-    {
-        public BlockType Type;
-        public TerrainBiome Biome;
-        public int Hardness; // 0 to 10 (10 being unbreakable)
-        public float Thickness; // 0 to 1 (Used for slowling player down)
-        public int MaxStack;
-
-        public BlockInfo() { }
-
-        public BlockInfo(BlockType type, int hardness, float thickness, int maxStack)
-        {
-            Type = type;
-            Hardness = hardness;
-            Thickness = thickness;
-            MaxStack = maxStack;
-        }
-    }
-
     public class BlockSounds
     {
         public Sound[] Sounds = new Sound[4];
@@ -87,6 +68,7 @@ namespace Enmity.Terrain
         public static Dictionary<BlockType, BlockSounds> Sounds = new Dictionary<BlockType, BlockSounds>();
 
         public BlockType Type;
+        public bool IsWall;
         public float LightLevel; // 0 to 1
         public int Hardness; // 0 to 10 (10 being unbreakable)
         public float Thickness; // 0 to 1 (Used for slowling player down)
@@ -98,7 +80,8 @@ namespace Enmity.Terrain
         public Block()
         {
             Type = BlockType.Air;
-            LightLevel = 0;
+            IsWall = false;
+            LightLevel = 0f;
             Hardness = 2;
             Thickness = 1f;
             MaxStack = 64;
@@ -110,19 +93,21 @@ namespace Enmity.Terrain
         private Block(BlockType blockType, Vector2 position)
         {
             Type = blockType;
+            IsWall = false;
+            LightLevel = 0f;
             Position = position;
             ChunkInfo = new ChunkInfo();
-            LightLevel = 0;
         }
 
-        private Block(BlockType blockType, int hardness, float thickness, int maxStack)
+        public Block(BlockType blockType, int hardness, float thickness, int maxStack)
         {
             Type = blockType;
+            IsWall = false;
+            LightLevel = 0f;
             Hardness = hardness;
             Thickness = thickness;
             MaxStack = maxStack;
             ChunkInfo = new ChunkInfo();
-            LightLevel = 0;
         }
 
         public static void InitializeBlockPrefabs()
@@ -137,7 +122,7 @@ namespace Enmity.Terrain
             Prefabs.Add(BlockType.Snow, new Block(BlockType.Snow, 1, 0.0f, 64));
 
             // Load all block textures/sounds (minus air) for later access
-            var blockTypeCount = Enum.GetNames(typeof(BlockType)).Length - 1;
+            var blockTypeCount = Enum.GetNames(typeof(BlockType)).Length;
 
             for (int i = 0; i < blockTypeCount; i++)
             {
@@ -155,7 +140,7 @@ namespace Enmity.Terrain
             }
         }
 
-        public static Block LoadPrefabAtPosition(BlockType blockType, Vector2 position)
+        public static Block InstantiatePrefab(BlockType blockType)
         {
             var block = new Block();
             var blockPrefab = Prefabs[blockType];
@@ -163,6 +148,30 @@ namespace Enmity.Terrain
             if (blockPrefab != null)
             {
                 block.Type = blockType;
+                block.IsWall = true;
+                block.LightLevel = blockPrefab.LightLevel;
+                block.Hardness = blockPrefab.Hardness;
+                block.Thickness = blockPrefab.Thickness;
+                block.MaxStack = blockPrefab.MaxStack;
+                block.Position = Vector2.Zero;
+                block.ChunkInfo = new ChunkInfo();
+                block.Biome = TerrainBiome.Flatland;
+            }
+            else
+                block = new Block();
+
+            return block;
+        }
+
+        public static Block InstantiatePrefabPos(BlockType blockType , Vector2 position)
+        {
+            var block = new Block();
+            var blockPrefab = Prefabs[blockType];
+
+            if (blockPrefab != null)
+            {
+                block.Type = blockType;
+                block.IsWall = true;
                 block.LightLevel = blockPrefab.LightLevel;
                 block.Hardness = blockPrefab.Hardness;
                 block.Thickness = blockPrefab.Thickness;

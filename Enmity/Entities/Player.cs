@@ -10,6 +10,8 @@ using Raylib_cs;
 using Enmity.Utils;
 using Enmity.Terrain;
 
+// TODO: Implement fall damage (fix ground check first)
+
 namespace Enmity.Entities
 {
     internal class Player
@@ -18,10 +20,20 @@ namespace Enmity.Entities
         public const float WalkSpeed = 0.5f;
         public const float RunSpeed = 1.45f;
 
+        // Mechanics
+        public int Health = 100;
+
+        // Entity
         public Vector2 Position;
         public float Rotation;
 
         public Camera2D Camera;
+
+        // Various
+        private bool grounded;
+        private bool wasGrounded;
+        private bool wasFalling;
+        private float fallStartY;
 
         private bool canJump;
         private bool canRun;
@@ -30,6 +42,8 @@ namespace Enmity.Entities
         private Vector2 acceleration;
         private Vector2 velocity;
         private Vector2 lastPosition;
+
+        private bool isFalling { get { return grounded && velocity.Y < 0f; } }
 
         public void Initialize()
         {
@@ -46,16 +60,16 @@ namespace Enmity.Entities
         {
             lastPosition = Position;
 
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) && canRun)
                 currentSpeed = RunSpeed;
             else
                 currentSpeed = WalkSpeed;
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
-                acceleration.X -= 1.0f * currentSpeed * deltaTime;
+                acceleration.X -= currentSpeed;
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
-                acceleration.X += 1.0f * currentSpeed * deltaTime;
+                acceleration.X += currentSpeed;
 
             Position.X += velocity.X;
 
@@ -68,19 +82,14 @@ namespace Enmity.Entities
                         var checkPos = collCheck[x, y].Position;
 
                         var isCollidingX = Raylib.CheckCollisionCircleRec(Position,
-                            0.4f, new Rectangle(checkPos.X, checkPos.Y, 1.0f, 1.0f));
+                            0.45f, new Rectangle(checkPos.X, checkPos.Y, 1.0f, 1.0f));
+
+                        var distance = Vector2.Distance(Position, checkPos + new Vector2(0.5f, 0.5f));
 
                         if (isCollidingX)
                         {
-                            if (collCheck[x, y].Type != BlockType.Air)
+                            if (collCheck[x, y].IsWall)
                                 Position.X = lastPosition.X;
-                            else if (collCheck[x, y].Type == BlockType.Water)
-                            {
-                                velocity.X *= 0.25f; // TODO: Needs to be frame independent
-                                canRun = false;
-                            }
-                            else
-                                canRun = true;
                         }
                     }
                 }
@@ -97,31 +106,26 @@ namespace Enmity.Entities
                         var checkPos = collCheck[x, y].Position;
 
                         var isCollidingY = Raylib.CheckCollisionCircleRec(Position,
-                            0.4f, new Rectangle(checkPos.X, checkPos.Y, 1.0f, 1.0f));
+                            0.45f, new Rectangle(checkPos.X, checkPos.Y, 1.0f, 1.0f));
+
+                        var distance = Vector2.Distance(Position, checkPos + new Vector2(0.5f, 0.5f));
 
                         if (isCollidingY)
                         {
-                            if (collCheck[x, y].Type != BlockType.Air)
+                            if (collCheck[x, y].IsWall)
                                 Position.Y = lastPosition.Y;
-                            else if (collCheck[x, y].Type == BlockType.Water)
-                            {
-                                velocity.Y *= 0.25f;
-                                canRun = false;
-                            }
-                            else
-                                canRun = true;
                         }
                     }
                 }
             }
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE))
-                acceleration.Y = -0.03f;
+                acceleration.Y = -0.7f;
             else
-                acceleration.Y = 0.06f;
+                acceleration.Y = 1.3f;
 
             velocity = Vector2.Lerp(velocity, Vector2.Zero, 0.2f);
-            velocity += acceleration;
+            velocity += acceleration * deltaTime;
 
             // Reset velocity/acceleration
             acceleration = Vector2.Zero;
@@ -134,7 +138,7 @@ namespace Enmity.Entities
 
         public void Draw(float deltaTime)
         {
-            Debug.DrawText($"delta: {deltaTime}");
+            Debug.DrawText($"grounded: {grounded}");
             Raylib.DrawCircleV(Position, 0.45f, Color.GREEN);
         }
     }

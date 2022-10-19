@@ -7,9 +7,11 @@ using System.Threading.Tasks;
 using Raylib_cs;
 
 using Enmity.Utils;
+using static Enmity.Utils.GameMath;
 
 namespace Enmity.GameMechanics
 {
+    // TODO: Time sometimes skips (fixed??)
     // TODO: Sky transitions too quickly
     // TODO: Sky transitions are offset from TimeOfDay
     internal class DayNightCycle
@@ -28,7 +30,7 @@ namespace Enmity.GameMechanics
 
         public void Initialize()
         {
-            TimeOfDay = 0f; // TODO: Start at morning, not noon
+            TimeOfDay = 6f;
 
             skyRect.width = Engine.ScreenWidth;
             skyRect.height = Engine.ScreenHeight;
@@ -42,16 +44,18 @@ namespace Enmity.GameMechanics
 
         public void Draw(float delaTime)
         {
-            if (TimeOfDay <= 12f)
+            if (TimeOfDay > 0f && TimeOfDay <= 12f)
                 SkyBrightness += delaTime / 12f;
-            else
+            else if (TimeOfDay > 12f && TimeOfDay <= 24f)
                 SkyBrightness -= delaTime / 12f;
 
-            SkyBrightness %= 1f;
+            //SkyBrightness %= 1f; // Breaks
 
-            currentSkyColor = GameMath.ColorLerp(nightSkyColor, daySkyColor, SkyBrightness);
+            SkyBrightness = Clamp(SkyBrightness, 0f, 1f);
 
-            Raylib.DrawRectangleGradientV(0, 0, Engine.ScreenWidth, Engine.ScreenHeight, currentSkyColor, currentSkyColor);
+            currentSkyColor = ColorLerp(nightSkyColor, daySkyColor, SkyBrightness);
+
+            Raylib.DrawRectangleGradientV(0, 0, Engine.ScreenWidth, Engine.ScreenHeight, ColorRGBMultVal(currentSkyColor, 0.5f), currentSkyColor);
 
             Debug.DrawText($"Time of day: {TimeOfDay}");
             Debug.DrawText($"Sky brightness: {SkyBrightness}");
