@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Raylib_cs;
 
 using Enmity.Utils;
+using Enmity.GameEngine;
 
 namespace Enmity
 {
@@ -76,6 +77,11 @@ namespace Enmity
                 dayNightCycle.Update(deltaTime);
                 terrain.Update(player.Position, player.Camera);
                 player.Update(deltaTime, terrain.ColliderCheckArray);
+
+                // TEMPORARY
+                Debug.DrawText($"Collider count: {Collider.ColliderPool.Count}");
+
+                Collider.ColliderPool.Clear(); // Must happen last
 
                 Raylib.BeginDrawing();
                 Raylib.ClearBackground(Color.BLACK);

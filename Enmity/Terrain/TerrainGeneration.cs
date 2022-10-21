@@ -10,6 +10,8 @@ using Raylib_cs;
 
 using static Enmity.Utils.GameMath;
 
+// TODO: Switch raylib rects to SquareColliders
+
 namespace Enmity.Terrain
 {
     internal class TerrainGeneration
@@ -292,6 +294,7 @@ namespace Enmity.Terrain
                 }
             }
 
+            clearChunkLighting(chunk);
             generateChunkLighting(chunk);
 
             return chunk;
@@ -311,7 +314,7 @@ namespace Enmity.Terrain
                     var topBlock = chunk.Blocks[x, Clamp(y - 1, 0, 255)];
                     var bottomBlock = chunk.Blocks[x, Clamp(y + 1, 0, 255)];
 
-                    if (currentBlock.Type == BlockType.Air || !currentBlock.IsWall)
+                    if (currentBlock.Type == BlockType.Air)
                         currentBlock.LightLevel = 1f;
                     else
                     {
@@ -330,13 +333,6 @@ namespace Enmity.Terrain
 
                         currentBlock.LightLevel = Clamp(currentBlock.LightLevel, 0f, 1f);
                     }
-
-                    // Debug
-                    /*if (x == 16 && y == 128)
-                    {
-                        Console.WriteLine($"Pos: ({currentBlock.Position.X}, {currentBlock.Position.Y}), ({topBlock.Position.X}, {topBlock.Position.Y})");
-                        Console.WriteLine($"Light level: {currentBlock.LightLevel}");
-                    }*/
                 }
             }
         }

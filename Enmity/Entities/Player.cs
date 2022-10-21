@@ -9,9 +9,9 @@ using Raylib_cs;
 
 using Enmity.Utils;
 using Enmity.Terrain;
+using Enmity.GameEngine;
 
 // TODO: Implement fall damage (fix ground check first)
-
 namespace Enmity.Entities
 {
     internal class Player
@@ -79,12 +79,10 @@ namespace Enmity.Entities
                 {
                     if (collCheck[x, y] != null)
                     {
-                        var checkPos = collCheck[x, y].Position;
+                        var collider = new SquareCollider(1.0f, 1.0f);
+                        collider.Position = collCheck[x, y].Position;
 
-                        var isCollidingX = Raylib.CheckCollisionCircleRec(Position,
-                            0.45f, new Rectangle(checkPos.X, checkPos.Y, 1.0f, 1.0f));
-
-                        var distance = Vector2.Distance(Position, checkPos + new Vector2(0.5f, 0.5f));
+                        var isCollidingX = collider.CheckCollisionCircle(this.Position, 0.45f);
 
                         if (isCollidingX)
                         {
@@ -103,12 +101,16 @@ namespace Enmity.Entities
                 {
                     if (collCheck[x, y] != null)
                     {
-                        var checkPos = collCheck[x, y].Position;
+                        var collider = new SquareCollider(1.0f, 1.0f);
+                        collider.Position = collCheck[x, y].Position;
 
-                        var isCollidingY = Raylib.CheckCollisionCircleRec(Position,
-                            0.45f, new Rectangle(checkPos.X, checkPos.Y, 1.0f, 1.0f));
+                        var isCollidingY = collider.CheckCollisionCircle(this.Position, 0.45f);
 
-                        var distance = Vector2.Distance(Position, checkPos + new Vector2(0.5f, 0.5f));
+                        if (collCheck[x, y].IsWall)
+                        {
+                            // TODO: Sets to true properly but, never resets to false when out of range...
+                            grounded = Physics.Raycast(this.Position + new Vector2(0f, 0.451f), new Vector2(0f, 1f), 1f);
+                        }
 
                         if (isCollidingY)
                         {
@@ -118,6 +120,8 @@ namespace Enmity.Entities
                     }
                 }
             }
+
+            Debug.DrawText($"grounded: {grounded}");
 
             if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE))
                 acceleration.Y = -0.7f;
@@ -138,7 +142,6 @@ namespace Enmity.Entities
 
         public void Draw(float deltaTime)
         {
-            Debug.DrawText($"grounded: {grounded}");
             Raylib.DrawCircleV(Position, 0.45f, Color.GREEN);
         }
     }
