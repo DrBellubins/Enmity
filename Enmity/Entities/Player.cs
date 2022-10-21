@@ -11,6 +11,8 @@ using Enmity.Utils;
 using Enmity.Terrain;
 using Enmity.GameEngine;
 
+using static Enmity.Utils.GameMath;
+
 // TODO: Implement fall damage (fix ground check first)
 namespace Enmity.Entities
 {
@@ -43,7 +45,7 @@ namespace Enmity.Entities
         private Vector2 velocity;
         private Vector2 lastPosition;
 
-        private bool isFalling { get { return grounded && velocity.Y < 0f; } }
+        public bool Falling { get { return !grounded && velocity.Y > 0f; } }
 
         public void Initialize()
         {
@@ -58,8 +60,10 @@ namespace Enmity.Entities
 
         public void Update(float deltaTime, Block[,] collCheck)
         {
+            grounded = false; // Needs to be reset cause raycast is finicky
             lastPosition = Position;
 
+            // Movement
             if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) && canRun)
                 currentSpeed = RunSpeed;
             else
@@ -71,6 +75,13 @@ namespace Enmity.Entities
             if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
                 acceleration.X += currentSpeed;
 
+            // Hover & gravity
+            if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE))
+                acceleration.Y = -0.7f;
+            else
+                acceleration.Y = 2.7f;
+
+            // Collision checks (x & y)
             Position.X += velocity.X;
 
             for (int x = 0; x < 4; x++)
@@ -87,7 +98,10 @@ namespace Enmity.Entities
                         if (isCollidingX)
                         {
                             if (collCheck[x, y].IsWall)
+                            {
                                 Position.X = lastPosition.X;
+                                velocity.X = 0f;
+                            }
                         }
                     }
                 }
@@ -106,27 +120,47 @@ namespace Enmity.Entities
 
                         var isCollidingY = collider.CheckCollisionCircle(this.Position, 0.45f);
 
-                        if (collCheck[x, y].IsWall)
-                        {
-                            // TODO: Sets to true properly but, never resets to false when out of range...
-                            grounded = Physics.Raycast(this.Position + new Vector2(0f, 0.451f), new Vector2(0f, 1f), 1f);
-                        }
-
                         if (isCollidingY)
                         {
                             if (collCheck[x, y].IsWall)
+                            {
                                 Position.Y = lastPosition.Y;
+                                velocity.Y = 0f;
+                            }
                         }
                     }
                 }
             }
 
+            // Grounded check
+            var blockBelow1 = collCheck[1, 3];
+
+            if (blockBelow1 != null)
+            {
+                if (blockBelow1.IsWall)
+                    // TODO: Sets to true properly, but never resets to false when out of range...
+                    grounded = Physics.Raycast(this.Position + new Vector2(0f, 0.451f), new Vector2(0f, 1f), 0.2f);
+            }
+
+            // Fall damage
+            if (!wasFalling && Falling)
+            {
+                // TODO: Rarely triggers
+                Console.WriteLine("started falling");
+                fallStartY = Position.Y;
+            }
+
+            if (!wasGrounded && grounded)
+            {
+                // TODO: Gives incorrect values when flying (but not when first spawning)
+                var fallDistance = MathF.Abs(fallStartY - Position.Y);
+                Console.WriteLine($"Fell {fallDistance} units");
+            }
+
+            Debug.DrawText($"Health: {Health}");
             Debug.DrawText($"grounded: {grounded}");
 
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_SPACE))
-                acceleration.Y = -0.7f;
-            else
-                acceleration.Y = 1.3f;
+            Debug.DrawText($"velocity: {velocity.X}, {velocity.Y}");
 
             velocity = Vector2.Lerp(velocity, Vector2.Zero, 0.2f);
             velocity += acceleration * deltaTime;
@@ -136,13 +170,21 @@ namespace Enmity.Entities
             //acceleration = new Vector2(0f, 0.04f);
             //velocity = Vector2.Lerp(velocity, Vector2.Zero, 17f * deltaTime);
 
-            Camera.zoom = GameMath.Clamp(Camera.zoom + Raylib.GetMouseWheelMove(), 15f, 100f);
+            Camera.zoom = Clamp(Camera.zoom + Raylib.GetMouseWheelMove(), 15f, 100f);
             Camera.target = Vector2.Lerp(Camera.target, Position, 3.5f * deltaTime);
+
+            wasGrounded = grounded;
+            wasFalling = Falling;
         }
 
         public void Draw(float deltaTime)
         {
             Raylib.DrawCircleV(Position, 0.45f, Color.GREEN);
+        }
+
+        public void Damage(int damage)
+        {
+            Health = Clamp(Health - damage, 0, 100);
         }
     }
 }

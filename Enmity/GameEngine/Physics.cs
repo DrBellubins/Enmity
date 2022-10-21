@@ -19,13 +19,14 @@ namespace Enmity.GameEngine
 
     internal class Physics
     {
+        // TODO: Raycasting seems return true a lot, and false only when first hitting...
         public static bool Raycast(Vector2 origin, Vector2 direction, float distance = float.PositiveInfinity)
         {
             var result = false;
 
             for (int i = 0; i < Collider.ColliderPool.Count; i++)
             {
-                // TODO: make sphere out of lines, implement raycasts against spheres
+                // TODO: implement raycast against circles
                 if (Collider.ColliderPool[i].GetType() == typeof(CircleCollider))
                 {
                     var collider = (CircleCollider)Collider.ColliderPool[i];

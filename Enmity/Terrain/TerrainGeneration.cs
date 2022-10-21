@@ -11,7 +11,6 @@ using Raylib_cs;
 using static Enmity.Utils.GameMath;
 
 // TODO: Switch raylib rects to SquareColliders
-
 namespace Enmity.Terrain
 {
     internal class TerrainGeneration
