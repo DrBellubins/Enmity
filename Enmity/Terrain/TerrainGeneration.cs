@@ -30,7 +30,7 @@ namespace Enmity.Terrain
         private Vector2 worldCursorPos;
         private Rectangle terrainCursor = new Rectangle(0.0f, 0.0f, 1.0f, 1.0f);
 
-        public static Vector2 SpawnPos = new Vector2();
+        public Vector2 SpawnPosition = new Vector2();
 
         public void Initialize()
         {
@@ -40,6 +40,29 @@ namespace Enmity.Terrain
             renderedChunks = new Chunk[8];
 
             regenerateChunks(GetNearestChunkCoord(new Vector2(0f, 32f)));
+
+            // Set spawn point
+            for (int cx = 0; cx < renderedChunks.Length; cx++)
+            {
+                if (renderedChunks[cx] != null)
+                {
+                    Chunk currentChunk = renderedChunks[cx];
+
+                    for (int y = 0; y < 256; y++)
+                    {
+                        var currentBlock = currentChunk.Blocks[0, y];
+
+                        if (currentBlock.Type != BlockType.Air)
+                        {
+                            SpawnPosition = currentBlock.Position - new Vector2(0f, 1f);
+                            break;
+                        }
+                            
+                        else
+                            continue;
+                    }
+                }
+            }
         }
 
         private bool cursorBlocked = false;
@@ -107,6 +130,35 @@ namespace Enmity.Terrain
 
             if (nearestChunkPos.X != prevNearestChunkPos.X || nearestChunkPos.Y != prevNearestChunkPos.Y)
                 regenerateChunks(nearestChunkPos);
+
+            /*for (int cx = 0; cx < renderedChunks.Length; cx++)
+            {
+                if (renderedChunks[cx] != null)
+                {
+                    Chunk currentChunk = renderedChunks[cx];
+
+                    for (int x = 0; x < 32; x++)
+                    {
+                        for (int y = 0; y < 256; y++)
+                        {
+                            var currentBlock = currentChunk.Blocks[x, y];
+
+                            if (currentBlock.IsWall)
+                            {
+                                var collider = new SquareCollider(1f, 1f);
+                                collider.Position = new Vector2(currentBlock.Position.X, currentBlock.Position.Y);
+                            }
+                        }
+                    }
+                }
+            }
+
+            var hit = new RaycastHit();
+            var testRay = Physics.Raycast(Vector2.Zero, Vector2.UnitY, ref hit, 1f);
+
+            Console.WriteLine($"Hitpos: {hit.Position.X}, {hit.Position.Y} - {testRay}");
+
+            SpawnPos = hit.Position;*/
 
             prevNearestChunkPos = nearestChunkPos;
         }
@@ -217,10 +269,10 @@ namespace Enmity.Terrain
                 {
                     retChunk = generateChunk(chunkPos);
 
-                    if (!retChunk.Info.Generated)
+                    if (!retChunk.Generated)
                     {
                         chunkBuffer.Add(retChunk); // Needs to only be done once when first generated
-                        retChunk.Info.Generated = true;
+                        retChunk.Generated = true;
                     }
                 }
 
@@ -231,7 +283,7 @@ namespace Enmity.Terrain
         private Chunk generateChunk(Vector2 chunkPosition)
         {
             Chunk chunk = new Chunk();
-            chunk.Info.Position = chunkPosition;
+            chunk.Position = chunkPosition;
 
             for (int x = 0; x < 32; x++)
             {
@@ -296,7 +348,7 @@ namespace Enmity.Terrain
                     //if (chunk.Blocks[x,y] == null)
                     //    chunk.Blocks[x, y] = currentBlock;
 
-                    currentBlock.ChunkInfo = chunk.Info;
+                    currentBlock.ParentChunk = chunk;
                     chunk.Blocks[x, y] = currentBlock;
                 }
             }
@@ -369,7 +421,7 @@ namespace Enmity.Terrain
             {
                 var chunk = chunkBuffer[i];
 
-                if (chunk.Info.Position == position)
+                if (chunk.Position == position)
                 {
                     foundChunk = true;
                     retChunk = chunk;
@@ -432,9 +484,9 @@ namespace Enmity.Terrain
                                 block.Biome = currentBlock.Biome;
 
                                 // Avoid adding same chunk twice
-                                if (!currentChunk.Info.Modified)
+                                if (!currentChunk.Modified)
                                 {
-                                    currentChunk.Info.Modified = true;
+                                    currentChunk.Modified = true;
                                     //WorldSave.Data.ModifiedChunks.Add(currentChunk);
                                 }
 
@@ -476,9 +528,9 @@ namespace Enmity.Terrain
                                 currentChunk.Blocks[x, y] = underBlock;
 
                                 // Avoid adding same chunk twice
-                                if (!currentChunk.Info.Modified)
+                                if (!currentChunk.Modified)
                                 {
-                                    currentChunk.Info.Modified = true;
+                                    currentChunk.Modified = true;
                                     //WorldSave.Data.ModifiedChunks.Add(currentChunk);
                                 }
 

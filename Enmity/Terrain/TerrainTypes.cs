@@ -30,21 +30,16 @@ namespace Enmity.Terrain
         Snowlands
     }
 
-    public class ChunkInfo
+    public class Chunk
     {
         public bool Generated;
         public bool Modified;
         public Vector2 Position;
-    }
-
-    public class Chunk
-    {
-        public ChunkInfo Info;
         public Block[,] Blocks = new Block[32, 256];
 
         public Chunk()
         {
-            Info = new ChunkInfo();
+            
         }
     }
 
@@ -74,7 +69,7 @@ namespace Enmity.Terrain
         public float Thickness; // 0 to 1 (Used for slowling player down)
         public int MaxStack;
         public Vector2 Position;
-        public ChunkInfo ChunkInfo;
+        public Chunk? ParentChunk;
         public TerrainBiome Biome;
 
         public Block()
@@ -86,7 +81,7 @@ namespace Enmity.Terrain
             Thickness = 1f;
             MaxStack = 64;
             Position = Vector2.Zero;
-            ChunkInfo = new ChunkInfo();
+            ParentChunk = null;
             Biome = TerrainBiome.Flatland;
         }
 
@@ -96,7 +91,7 @@ namespace Enmity.Terrain
             IsWall = false;
             LightLevel = 0f;
             Position = position;
-            ChunkInfo = new ChunkInfo();
+            ParentChunk = null;
         }
 
         public Block(BlockType blockType, int hardness, float thickness, int maxStack)
@@ -107,7 +102,7 @@ namespace Enmity.Terrain
             Hardness = hardness;
             Thickness = thickness;
             MaxStack = maxStack;
-            ChunkInfo = new ChunkInfo();
+            ParentChunk = null;
         }
 
         public static void InitializeBlockPrefabs()
@@ -154,7 +149,7 @@ namespace Enmity.Terrain
                 block.Thickness = blockPrefab.Thickness;
                 block.MaxStack = blockPrefab.MaxStack;
                 block.Position = Vector2.Zero;
-                block.ChunkInfo = new ChunkInfo();
+                block.ParentChunk = null;
                 block.Biome = TerrainBiome.Flatland;
             }
             else
@@ -177,7 +172,7 @@ namespace Enmity.Terrain
                 block.Thickness = blockPrefab.Thickness;
                 block.MaxStack = blockPrefab.MaxStack;
                 block.Position = position;
-                block.ChunkInfo = new ChunkInfo();
+                block.ParentChunk = null;
                 block.Biome = TerrainBiome.Flatland;
             }
             else

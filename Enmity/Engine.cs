@@ -56,7 +56,7 @@ namespace Enmity
             terrain.Initialize();
 
             var player = new Entities.Player();
-            player.Initialize();
+            player.Initialize(terrain.SpawnPosition);
 
             while (IsRunning)
             {

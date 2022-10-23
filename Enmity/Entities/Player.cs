@@ -31,6 +31,8 @@ namespace Enmity.Entities
 
         public Camera2D Camera;
 
+        public bool Falling { get { return !grounded && velocity.Y < 0f; } }
+
         // Various
         private bool grounded;
         private bool wasGrounded;
@@ -41,14 +43,20 @@ namespace Enmity.Entities
         private bool canRun;
         private float currentSpeed;
 
+        private Vector2 spawnPosition;
+
+        // Movement
         private Vector2 acceleration;
         private Vector2 velocity;
         private Vector2 lastPosition;
 
-        public bool Falling { get { return !grounded && velocity.Y < 0f; } }
+        private Sound painSound;
 
-        public void Initialize()
+        public void Initialize(Vector2 spawnPos)
         {
+            painSound = Raylib.LoadSound("Assets/Sounds/Player/pain.ogg");
+
+            spawnPosition = spawnPos;
             Respawn();
 
             Camera = new Camera2D();
@@ -135,14 +143,16 @@ namespace Enmity.Entities
             // Grounded check
             var blockBelow1 = collCheck[1, 3];
 
+            var hit = new RaycastHit();
+
             if (blockBelow1 != null)
             {
                 if (blockBelow1.IsWall)
-                    // TODO: Sometimes returns false even when hitting something
                     grounded = Physics.Raycast(this.Position + new Vector2(0f, 0.451f), new Vector2(0f, 1f), 0.2f);
             }
 
             // Fall damage
+            // TODO: Doesn't always trigger
             if (!wasFalling && Falling)
             {
                 fallStartY = Position.Y;
@@ -154,7 +164,7 @@ namespace Enmity.Entities
                 var fallDistance = MathF.Abs(fallStartY - Position.Y);
 
                 if (fallDistance > 2f)
-                    Damage((int)fallDistance * 4);
+                    Damage((int)fallDistance);
 
                 Console.WriteLine($"Fell {fallDistance} units");
             }
@@ -191,11 +201,13 @@ namespace Enmity.Entities
         public void Damage(int damage)
         {
             Health = Clamp(Health - damage, 0, 100);
+            Raylib.PlaySound(painSound);
         }
 
         public void Respawn()
         {
-            Position = new Vector2(0f, 32f);
+            Position = spawnPosition;
+            //Position = new Vector2(0f, 32f);
             Health = 100;
         }
     }
