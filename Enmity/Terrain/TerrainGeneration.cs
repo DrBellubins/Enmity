@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Enmity.GameEngine;
 using Enmity.Utils;
 using FastNoise;
 using Raylib_cs;
@@ -29,14 +30,16 @@ namespace Enmity.Terrain
         private Vector2 worldCursorPos;
         private Rectangle terrainCursor = new Rectangle(0.0f, 0.0f, 1.0f, 1.0f);
 
-        public void Initialize(Vector2 spawnPoint)
+        public static Vector2 SpawnPos = new Vector2();
+
+        public void Initialize()
         {
             Seed = new Random().Next(int.MaxValue);
             noise.SetSeed(Seed);
 
             renderedChunks = new Chunk[8];
 
-            regenerateChunks(GetNearestChunkCoord(spawnPoint));
+            regenerateChunks(GetNearestChunkCoord(new Vector2(0f, 32f)));
         }
 
         private bool cursorBlocked = false;
@@ -92,8 +95,13 @@ namespace Enmity.Terrain
             {
                 for (int y = 0; y < 4; y++)
                 {
-                    ColliderCheckArray[x, y] = getBlockAtPos(GetNearestBlockCoord(playerPos
+                    var currentBlock = getBlockAtPos(GetNearestBlockCoord(playerPos
                         + new Vector2(x - 1.5f, y - 1.5f)));
+
+                    if (currentBlock.Type != BlockType.Air)
+                        ColliderCheckArray[x, y] = currentBlock;
+                    else
+                        ColliderCheckArray[x, y] = new Block();
                 }
             }
 

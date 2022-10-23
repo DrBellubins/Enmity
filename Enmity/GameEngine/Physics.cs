@@ -22,7 +22,7 @@ namespace Enmity.GameEngine
         // TODO: Raycasting seems return true a lot, and false only when first hitting...
         public static bool Raycast(Vector2 origin, Vector2 direction, float distance = float.PositiveInfinity)
         {
-            var result = false;
+            //var result = false;
 
             for (int i = 0; i < Collider.ColliderPool.Count; i++)
             {
@@ -46,8 +46,8 @@ namespace Enmity.GameEngine
 
                         unsafe
                         {
-                            if (!result)
-                                result = Raylib.CheckCollisionLines(origin, origin + (direction * distance), start, end, null);
+                            if (Raylib.CheckCollisionLines(origin, origin + (direction * distance), start, end, null))
+                                return true;
                         }
                     }
                 }
@@ -55,7 +55,53 @@ namespace Enmity.GameEngine
                     return false; // Can't raycast against base colliders
             }
 
-            return result;
+            return false;
+        }
+
+        public static bool Raycast(Vector2 origin, Vector2 direction, ref RaycastHit hit, float distance = float.PositiveInfinity)
+        {
+            var returnHit = new RaycastHit();
+
+            for (int i = 0; i < Collider.ColliderPool.Count; i++)
+            {
+                // TODO: implement raycast against circles
+                if (Collider.ColliderPool[i].GetType() == typeof(CircleCollider))
+                {
+                    var collider = (CircleCollider)Collider.ColliderPool[i];
+
+                    //if (!result) // Prevent getting switched back to false even when hitting something
+                    //    result = Raylib.CheckCollisionCircleRec(collider.Position, collider.Radius, rayRect);
+                }
+                else if (Collider.ColliderPool[i].GetType() == typeof(SquareCollider))
+                {
+                    var collider = (SquareCollider)Collider.ColliderPool[i];
+                    var colliderLines = getLinesFromRectangle(collider.Rect);
+
+                    for (int ii = 0; ii < colliderLines.Count; ii++)
+                    {
+                        var start = colliderLines.Keys.ElementAt(ii);
+                        var end = colliderLines.Values.ElementAt(ii);
+
+                        unsafe
+                        {
+                            var hitPos = new Vector2();
+
+                            if (Raylib.CheckCollisionLines(origin, origin + (direction * distance), start, end, &hitPos))
+                            {
+                                returnHit.Position = hitPos;
+                                returnHit.Collider = collider;
+                                hit = returnHit;
+
+                                return true;
+                            }
+                        }
+                    }
+                }
+                else
+                    return false; // Can't raycast against base colliders
+            }
+
+            return false;
         }
 
         private static Dictionary<Vector2, Vector2> getLinesFromRectangle(Rectangle rect)

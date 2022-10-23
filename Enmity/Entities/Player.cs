@@ -45,11 +45,11 @@ namespace Enmity.Entities
         private Vector2 velocity;
         private Vector2 lastPosition;
 
-        public bool Falling { get { return !grounded && velocity.Y > 0f; } }
+        public bool Falling { get { return !grounded && velocity.Y < 0f; } }
 
         public void Initialize()
         {
-            Position = new Vector2(0f, 32f);
+            Respawn();
 
             Camera = new Camera2D();
             Camera.target = Position;
@@ -138,22 +138,24 @@ namespace Enmity.Entities
             if (blockBelow1 != null)
             {
                 if (blockBelow1.IsWall)
-                    // TODO: Sets to true properly, but never resets to false when out of range...
+                    // TODO: Sometimes returns false even when hitting something
                     grounded = Physics.Raycast(this.Position + new Vector2(0f, 0.451f), new Vector2(0f, 1f), 0.2f);
             }
 
             // Fall damage
             if (!wasFalling && Falling)
             {
-                // TODO: Rarely triggers
-                Console.WriteLine("started falling");
                 fallStartY = Position.Y;
+                Console.WriteLine("Started falling");
             }
 
             if (!wasGrounded && grounded)
             {
-                // TODO: Gives incorrect values when flying (but not when first spawning)
                 var fallDistance = MathF.Abs(fallStartY - Position.Y);
+
+                if (fallDistance > 2f)
+                    Damage((int)fallDistance * 4);
+
                 Console.WriteLine($"Fell {fallDistance} units");
             }
 
@@ -170,6 +172,10 @@ namespace Enmity.Entities
             //acceleration = new Vector2(0f, 0.04f);
             //velocity = Vector2.Lerp(velocity, Vector2.Zero, 17f * deltaTime);
 
+            // Death
+            if (Health <= 0)
+                Respawn();
+
             Camera.zoom = Clamp(Camera.zoom + Raylib.GetMouseWheelMove(), 15f, 100f);
             Camera.target = Vector2.Lerp(Camera.target, Position, 3.5f * deltaTime);
 
@@ -185,6 +191,12 @@ namespace Enmity.Entities
         public void Damage(int damage)
         {
             Health = Clamp(Health - damage, 0, 100);
+        }
+
+        public void Respawn()
+        {
+            Position = new Vector2(0f, 32f);
+            Health = 100;
         }
     }
 }

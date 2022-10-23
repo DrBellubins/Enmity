@@ -53,7 +53,7 @@ namespace Enmity
             dayNightCycle.Initialize();
 
             var terrain = new Terrain.TerrainGeneration();
-            terrain.Initialize(new Vector2(0f, 128f));
+            terrain.Initialize();
 
             var player = new Entities.Player();
             player.Initialize();
@@ -99,6 +99,8 @@ namespace Enmity
 
                 // UI Draw
                 Debug.Draw(time, deltaTime, player.Position);
+                //Debug.DrawText($"TestRay: {testRay}");
+                
 
                 Raylib.EndDrawing();
 
