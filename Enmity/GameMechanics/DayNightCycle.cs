@@ -38,7 +38,7 @@ namespace Enmity.GameMechanics
 
         public void Update(float delaTime)
         {
-            TimeOfDay += delaTime * 0.01f;
+            TimeOfDay += delaTime;
             TimeOfDay %= 24f;
         }
 

@@ -75,7 +75,7 @@ namespace Enmity
                 // Update
                 Debug.Update();
                 dayNightCycle.Update(deltaTime);
-                terrain.Update(player.Position, player.Camera);
+                terrain.Update(time, player.Position, player.Camera, dayNightCycle.SkyBrightness);
                 player.Update(deltaTime, terrain.ColliderCheckArray);
 
                 // TEMPORARY
@@ -92,7 +92,7 @@ namespace Enmity
                 Raylib.BeginMode2D(player.Camera);
 
                 // World draw
-                terrain.Draw(dayNightCycle.SkyBrightness, player.Position);
+                terrain.Draw(player.Position);
                 player.Draw(deltaTime);
 
                 Raylib.EndMode2D();

@@ -142,7 +142,6 @@ namespace Enmity.Entities
 
             // Grounded check
             var blockBelow1 = collCheck[1, 3];
-
             var hit = new RaycastHit();
 
             if (blockBelow1 != null)
@@ -171,8 +170,7 @@ namespace Enmity.Entities
 
             Debug.DrawText($"Health: {Health}");
             Debug.DrawText($"grounded: {grounded}");
-
-            Debug.DrawText($"velocity: {velocity.X}, {velocity.Y}");
+            Debug.DrawText($"falling: {Falling}");
 
             velocity = Vector2.Lerp(velocity, Vector2.Zero, 0.2f);
             velocity += acceleration * deltaTime;

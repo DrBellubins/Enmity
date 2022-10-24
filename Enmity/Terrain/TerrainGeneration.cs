@@ -20,6 +20,8 @@ namespace Enmity.Terrain
         public Block SelectedBlock = new Block();
         public Block[,] ColliderCheckArray = new Block[4, 4];
 
+        public Vector2 SpawnPosition = new Vector2();
+
         private Chunk[] renderedChunks;
 
         private List<Chunk> chunkBuffer = new List<Chunk>();
@@ -30,7 +32,7 @@ namespace Enmity.Terrain
         private Vector2 worldCursorPos;
         private Rectangle terrainCursor = new Rectangle(0.0f, 0.0f, 1.0f, 1.0f);
 
-        public Vector2 SpawnPosition = new Vector2();
+        private float chunkTime = 0.0f;
 
         public void Initialize()
         {
@@ -68,7 +70,7 @@ namespace Enmity.Terrain
         private bool cursorBlocked = false;
         private Vector2 prevSelectedBlockPos;
 
-        public void Update(Vector2 playerPos, Camera2D camera)
+        public void Update(float time, Vector2 playerPos, Camera2D camera, float skyBrightness)
         {
             worldCursorPos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
             var nearestChunkPos = GetNearestChunkCoord(playerPos);
@@ -92,7 +94,7 @@ namespace Enmity.Terrain
 
                 //testBlock.LightLevel = 1f;
 
-                PlaceBlock(playerPos, SelectedBlock.Position, testBlock);
+                placeBlock(playerPos, SelectedBlock.Position, testBlock);
 
                 var sound = Block.Sounds[testBlock.Type].RND;
                 
@@ -103,7 +105,7 @@ namespace Enmity.Terrain
             if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)
                 && SelectedBlock.IsWall && SelectedBlock.Position == prevSelectedBlockPos)
             {
-                BreakBlock(playerPos, SelectedBlock.Position);
+                breakBlock(playerPos, SelectedBlock.Position);
 
                 var sound = Block.Sounds[SelectedBlock.Type].RND;
 
@@ -131,54 +133,38 @@ namespace Enmity.Terrain
             if (nearestChunkPos.X != prevNearestChunkPos.X || nearestChunkPos.Y != prevNearestChunkPos.Y)
                 regenerateChunks(nearestChunkPos);
 
-            /*for (int cx = 0; cx < renderedChunks.Length; cx++)
+            // Update chunks
+            if (time > chunkTime)
             {
-                if (renderedChunks[cx] != null)
-                {
-                    Chunk currentChunk = renderedChunks[cx];
+                chunkTime = time + TerrainConfig.ChunkTickPeriod;
 
-                    for (int x = 0; x < 32; x++)
-                    {
-                        for (int y = 0; y < 256; y++)
-                        {
-                            var currentBlock = currentChunk.Blocks[x, y];
-
-                            if (currentBlock.IsWall)
-                            {
-                                var collider = new SquareCollider(1f, 1f);
-                                collider.Position = new Vector2(currentBlock.Position.X, currentBlock.Position.Y);
-                            }
-                        }
-                    }
-                }
+                // execute block of code here
+                updateChunks(skyBrightness);
             }
-
-            var hit = new RaycastHit();
-            var testRay = Physics.Raycast(Vector2.Zero, Vector2.UnitY, ref hit, 1f);
-
-            Console.WriteLine($"Hitpos: {hit.Position.X}, {hit.Position.Y} - {testRay}");
-
-            SpawnPos = hit.Position;*/
 
             prevNearestChunkPos = nearestChunkPos;
         }
 
         // TODO: Time of day affect is only visual
-        public void Draw(float skyBrightness, Vector2 playerPos)
+        public void Draw(Vector2 playerPos)
         {
             for (int cx = 0; cx < renderedChunks.Length; cx++)
             {
                 if (renderedChunks[cx] != null)
                 {
-                    Chunk currentChunk = renderedChunks[cx];
+                    var currentChunk = renderedChunks[cx];
 
                     for (int x = 0; x < 32; x++)
                     {
                         for (int y = 0; y < 256; y++)
                         {
                             var currentBlock = currentChunk.Blocks[x, y];
-
                             var blockDistance = Vector2.Distance(playerPos, currentBlock.Position);
+
+                            if (x == 0 && y == 128)
+                            {
+                                Debug.DrawText($"Light level: {currentBlock.LightLevel}");
+                            }
 
                             if (blockDistance < 64f)
                             {
@@ -186,8 +172,8 @@ namespace Enmity.Terrain
                                 var newTextureRect = new Rectangle(currentBlock.Position.X,
                                         currentBlock.Position.Y, 1f, 1f);
 
-                                var lightLevel = currentBlock.LightLevel * Clamp(skyBrightness + 0.3f, 0f, 1f);
-                                //lightLevel = Clamp(lightLevel, 0f, 1f);
+                                //var lightLevel = currentBlock.LightLevel * Clamp(skyBrightness + 0.3f, 0f, 1f);
+                                var lightLevel = Clamp(currentBlock.LightLevel + 0.3f, 0f, 1f);
 
                                 //var lightLevel = currentBlock.LightLevel * 2f;
                                 //lightLevel = Clamp(1f - lightLevel, 0f, 1f);
@@ -244,6 +230,30 @@ namespace Enmity.Terrain
                 {
                     var colDebug = new Rectangle(ColliderCheckArray[x, y].Position.X, ColliderCheckArray[x, y].Position.Y, 1f, 1f);
                     Raylib.DrawRectangleLinesEx(colDebug, 0.02f, Color.RED);
+                }
+            }
+        }
+
+        private void updateChunks(float skyBrightness)
+        {
+            for (int cx = 0; cx < renderedChunks.Length; cx++)
+            {
+                if (renderedChunks[cx] != null)
+                {
+                    var currentChunk = renderedChunks[cx];
+
+                    for (int x = 0; x < 32; x++)
+                    {
+                        for (int y = 0; y < 256; y++)
+                        {
+                            var currentBlock = currentChunk.Blocks[x, y];
+                            currentBlock.LightLevel = Clamp(skyBrightness, 0f, 1f);
+
+                            currentChunk.Blocks[x, y] = currentBlock;
+                        }
+                    }
+
+                    renderedChunks[cx] = currentChunk;
                 }
             }
         }
@@ -463,7 +473,7 @@ namespace Enmity.Terrain
             return retBlock;
         }
 
-        private void PlaceBlock(Vector2 playerPos, Vector2 blockPos, Block block)
+        private void placeBlock(Vector2 playerPos, Vector2 blockPos, Block block)
         {
             for (int cx = 0; cx < renderedChunks.Length; cx++)
             {
@@ -503,7 +513,7 @@ namespace Enmity.Terrain
             }
         }
 
-        private void BreakBlock(Vector2 playerPos, Vector2 blockPos)
+        private void breakBlock(Vector2 playerPos, Vector2 blockPos)
         {
             for (int cx = 0; cx < renderedChunks.Length; cx++)
             {
