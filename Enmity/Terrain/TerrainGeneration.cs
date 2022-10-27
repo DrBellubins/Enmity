@@ -11,7 +11,7 @@ using Raylib_cs;
 
 using static Enmity.Utils.GameMath;
 
-// TODO: Switch raylib rects to SquareColliders
+// TODO: Implement quadtrees https://referencesource.microsoft.com/#System.Activities.Presentation/System.Activities.Presentation/System/Activities/Presentation/View/QuadTree.cs
 namespace Enmity.Terrain
 {
     internal class TerrainGeneration
@@ -136,7 +136,7 @@ namespace Enmity.Terrain
             // Update chunks
             if (time > chunkTime)
             {
-                chunkTime = time + TerrainConfig.ChunkTickPeriod;
+                chunkTime = time + TerrainConfig.ChunkTimeStep;
 
                 // execute block of code here
                 updateChunks(skyBrightness);
@@ -248,6 +248,8 @@ namespace Enmity.Terrain
                         {
                             var currentBlock = currentChunk.Blocks[x, y];
                             currentBlock.LightLevel = Clamp(skyBrightness, 0f, 1f);
+
+                            // TODO: Figure out how to split fluid sim into a separate class
 
                             currentChunk.Blocks[x, y] = currentBlock;
                         }

@@ -9,6 +9,6 @@ namespace Enmity.Terrain
     internal class TerrainConfig
     {
         public const float TickRate = 10f; // 10 ticks per second
-        public const float ChunkTickPeriod = 1f / TickRate;
+        public const float ChunkTimeStep = 1f / TickRate;
     }
 }
