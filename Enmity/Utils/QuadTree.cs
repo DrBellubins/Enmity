@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 
 using Raylib_cs;
 
+using Enmity.Terrain;
+
 namespace Enmity.Utils
 {
     internal class QuadTree
@@ -17,22 +19,22 @@ namespace Enmity.Utils
 
         public int Level;
 
-        private List<Rectangle> objects;
+        private List<Block> blocks;
         private Rectangle bounds;
         private QuadTree[] nodes;
 
-        public QuadTree(int level, Rectangle pBounds)
+        public QuadTree(int level, Rectangle _bounds)
         {
             Level = level;
-            objects = new List<Rectangle>();
-            bounds = pBounds;
+            blocks = new List<Block>();
+            bounds = _bounds;
             nodes = new QuadTree[4];
         }
 
         // Clears the quadtree
         public void Clear()
         {
-            objects.Clear();
+            blocks.Clear();
 
             for (int i = 0; i < nodes.Length; i++)
             {
@@ -60,12 +62,14 @@ namespace Enmity.Utils
 
         // Determine which node the object belongs to. -1 means
         // object cannot completely fit within a child node and is part of the parent node
-        public int GetIndex(Rectangle rect)
+        public int GetIndex(Block block)
         {
             int index = -1;
             var verticalMidpoint = bounds.x + (bounds.width / 2);
             var horizontalMidpoint = bounds.y + (bounds.height / 2);
 
+            var rect = new Rectangle(block.Position.X, block.Position.Y, 1f, 1f);
+            
             // Object can completely fit within the top quadrants
             bool topQuadrant = (rect.y < horizontalMidpoint && rect.y + rect.height < horizontalMidpoint);
             // Object can completely fit within the bottom quadrants
@@ -93,36 +97,35 @@ namespace Enmity.Utils
         // Insert the object into the quadtree. If the node
         // exceeds the capacity, it will split and add all
         // objects to their corresponding nodes.
-        public void Insert(Rectangle rect)
+        public void Insert(Block block)
         {
             if (nodes[0] != null)
             {
-                int index = GetIndex(rect);
+                int index = GetIndex(block);
 
                 if (index != -1)
                 {
-                    nodes[index].Insert(rect);
-
+                    nodes[index].Insert(block);
                     return;
                 }
             }
 
-            objects.Add(rect);
+            blocks.Add(block);
 
-            if (objects.Count > MaxObjects && Level < MaxLevels)
+            if (blocks.Count > MaxObjects && Level < MaxLevels)
             {
                 if (nodes[0] == null)
                     Split();
 
                 int i = 0;
-                while (i < objects.Count)
+                while (i < blocks.Count)
                 {
-                    int index = GetIndex(objects[i]);
+                    int index = GetIndex(blocks[i]);
 
                     if (index != -1)
                     {
-                        objects.Remove(objects[i]);
-                        nodes[index].Insert(objects[i]);
+                        blocks.Remove(blocks[i]);
+                        nodes[index].Insert(blocks[i]);
                     }
                     else
                         i++;
@@ -131,15 +134,15 @@ namespace Enmity.Utils
         }
 
         // Return all objects that could collide with the given object
-        public List<Rectangle> Retrieve(List<Rectangle> returnList, Rectangle rect)
+        public List<Block> Retrieve(List<Block> returnList, Block block)
         {
-            int index = GetIndex(rect);
+            int index = GetIndex(block);
             if (index != -1 && nodes[0] != null)
             {
-                nodes[index].Retrieve(returnList, rect);
+                nodes[index].Retrieve(returnList, block);
             }
 
-            returnList.AddRange(objects);
+            returnList.AddRange(blocks);
 
             return returnList;
         }

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Enmity.GameEngine;
@@ -90,7 +92,7 @@ namespace Enmity.Terrain
             {
                 Console.WriteLine($"place block {SelectedBlock.Position.X}, {SelectedBlock.Position.Y}");
                 //var testBlock = new Block(true, SelectedBlock.Position, Block.Prefabs[hotbarSelection.Type]);
-                var testBlock = Block.InstantiatePrefabPos(BlockType.Stone, SelectedBlock.Position);
+                var testBlock = Block.InstantiatePrefabPos(BlockType.Water, SelectedBlock.Position);
 
                 //testBlock.LightLevel = 1f;
 
@@ -249,7 +251,19 @@ namespace Enmity.Terrain
                             var currentBlock = currentChunk.Blocks[x, y];
                             currentBlock.LightLevel = Clamp(skyBrightness, 0f, 1f);
 
+                            var neighbors = getnNeigboringBlocks(cx, x, y);
+
+                            // TODO: Water flows instantly
                             // TODO: Figure out how to split fluid sim into a separate class
+                            if (currentBlock.Type == BlockType.Water)
+                            {
+                                if (!neighbors[3].IsWall)
+                                {
+                                    neighbors[3] = Block.InstantiatePrefabPos(BlockType.Water, neighbors[3].Position);
+                                }
+                            }
+
+                            setnNeigboringBlocks(cx, x, y, neighbors);
 
                             currentChunk.Blocks[x, y] = currentBlock;
                         }
@@ -446,6 +460,27 @@ namespace Enmity.Terrain
                 return null;
         }
 
+        // Boilerplate methods to easily get/set neighbors, hacky and not ideal.
+        private Block[] getnNeigboringBlocks(int cx, int x, int y)
+        {
+            var neighbors = new Block[4];
+
+            neighbors[0] = renderedChunks[cx].Blocks[Clamp(x - 1, 0, 31), y]; // left
+            neighbors[1] = renderedChunks[cx].Blocks[Clamp(x + 1, 0, 31), y]; // right
+            neighbors[2] = renderedChunks[cx].Blocks[x, Clamp(y - 1, 0, 255)]; // up
+            neighbors[3] = renderedChunks[cx].Blocks[x, Clamp(y + 1, 0, 255)]; // down
+
+            return neighbors;
+        }
+
+        private void setnNeigboringBlocks(int cx, int x, int y, Block[] neighbors)
+        {
+            renderedChunks[cx].Blocks[Clamp(x - 1, 0, 31), y] = neighbors[0]; // left
+            renderedChunks[cx].Blocks[Clamp(x + 1, 0, 31), y] = neighbors[1]; // right
+            renderedChunks[cx].Blocks[x, Clamp(y - 1, 0, 255)] = neighbors[2]; // up
+            renderedChunks[cx].Blocks[x, Clamp(y + 1, 0, 255)] = neighbors[3]; // down
+        }
+
         private Block getBlockAtPos(Vector2 pos)
         {
             Block retBlock = new Block(); // TODO: Will never return null
@@ -463,10 +498,7 @@ namespace Enmity.Terrain
                             Block curBlock = currentChunk.Blocks[x, y];
 
                             if ((curBlock.Position.X == pos.X) && (curBlock.Position.Y == pos.Y))
-                            {
-                                retBlock = curBlock;
-                                break;
-                            }
+                                return curBlock;
                         }
                     }
                 }
